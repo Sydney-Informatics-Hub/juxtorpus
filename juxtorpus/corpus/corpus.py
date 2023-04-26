@@ -5,7 +5,7 @@ from spacy.tokens import Doc
 from spacy import Language
 from sklearn.feature_extraction.text import CountVectorizer
 import re
-import randomname
+import coolname
 
 from juxtorpus.interfaces.clonable import Clonable
 from juxtorpus.corpus.slicer import CorpusSlicer, SpacyCorpusSlicer
@@ -27,7 +27,7 @@ _CORPUS_NAME_SEED = 42
 def generate_name(corpus: 'Corpus') -> str:
     # todo: should generate a random name based on corpus words
     # tmp solution - generate a random name.
-    while name := randomname.get_name():
+    while name := coolname.generate_slug(2):
         if name in _ALL_CORPUS_NAMES:
             continue
         else:
@@ -111,7 +111,7 @@ class Corpus(Clonable):
     @classmethod
     def from_dataframe(cls, df: pd.DataFrame, col_doc: str = COL_DOC, name: str = None) -> 'Corpus':
         if col_doc not in df.columns:
-            raise ValueError(f"Column {col_doc} not found. You must set the col_text argument.\n"
+            raise ValueError(f"Column {col_doc} not found. You must set the col_doc argument.\n"
                              f"Available columns: {df.columns}")
         meta_df: pd.DataFrame = df.drop(col_doc, axis=1)
         metas: Corpus.MetaRegistry = Corpus.MetaRegistry()
@@ -120,7 +120,7 @@ class Corpus(Clonable):
             if metas.get(col, None) is not None:
                 raise KeyError(f"{col} already exists. Please rename the column.")
             metas[col] = SeriesMeta(col, meta_df.loc[:, col])
-        corpus = Corpus(df[col_doc], metas)
+        corpus = Corpus(df[col_doc], metas, name)
         return corpus
 
     def __init__(self, text: pd.Series, metas: Union[dict[str, Meta], MetaRegistry] = None, name: str = None):
@@ -398,7 +398,7 @@ class SpacyCorpus(Corpus):
     @classmethod
     def from_corpus(cls, corpus: Corpus, nlp: Language, source=None) -> 'SpacyCorpus':
         from juxtorpus.corpus.processors import process
-        return process(corpus, nlp=nlp, source=source)
+        return process(corpus, nlp=nlp, source=source, name=corpus.name)
 
     @classmethod
     def from_dataframe(cls, df: pd.DataFrame, col_doc: str = Corpus.COL_DOC,
@@ -406,8 +406,8 @@ class SpacyCorpus(Corpus):
         corpus = super().from_dataframe(df, col_doc)
         return cls.from_corpus(corpus, nlp)
 
-    def __init__(self, docs, metas: dict, nlp: spacy.Language, source: str):
-        super(SpacyCorpus, self).__init__(docs, metas)
+    def __init__(self, docs, metas: dict, nlp: spacy.Language, source: str, name: str = None):
+        super(SpacyCorpus, self).__init__(docs, metas, name)
         self._nlp = nlp
         self._source = source
         self.source_to_word_matcher = {

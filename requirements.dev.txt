@@ -1,7 +1,15 @@
 pandas
 numpy
 jupyter
-rake
 wordcloud
-froznedict
+frozendict
 ipywidgets==7.7.1
+spacy
+scikit-learn
+colorlog
+plotly
+pyldavis==3.4.0
+transformers
+pyarrow
+coolname
+
