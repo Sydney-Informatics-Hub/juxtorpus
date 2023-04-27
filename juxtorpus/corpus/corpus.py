@@ -123,6 +123,15 @@ class Corpus(Clonable):
         corpus = Corpus(df[col_doc], metas, name)
         return corpus
 
+    def to_dataframe(self):
+        """ Export corpus as a dataframe. """
+        meta_series = [self._df]
+        for meta_id, meta in self.meta.items():
+            if isinstance(meta, SeriesMeta):
+                meta_series.append(pd.Series(meta.series, name=meta_id))
+        return pd.concat(meta_series, axis=1)
+
+
     def __init__(self, text: pd.Series, metas: Union[dict[str, Meta], MetaRegistry] = None, name: str = None):
         self._name = name if name else generate_name(self)
 

@@ -4,6 +4,7 @@ import unittest
 import pandas as pd
 import numpy as np
 from juxtorpus.corpus import Corpus
+from juxtorpus.corpus.meta import SeriesMeta
 
 
 def random_mask(corpus: Corpus):
@@ -120,3 +121,38 @@ class TestCorpus(unittest.TestCase):
         for clone_idx in clone_indices:
             original_idx = texts.index[clone_idx]
             assert is_equal(self.corpus.custom_dtm.matrix[original_idx, :], clone_again.custom_dtm.matrix[clone_idx, :])
+
+    def test_Given_corpus_When_to_dataframe_Then_size_are_matched(self):
+        df = self.corpus.to_dataframe()
+        assert len(df) == len(self.corpus), f"Mismatched df size: {len(self.corpus)=} {len(df)=}."
+
+        mask, num_trues = random_mask(self.corpus)
+        subcorpus = self.corpus.cloned(mask)
+        df = subcorpus.to_dataframe()
+        assert len(df) == len(subcorpus), f"Mismatched df size: {len(subcorpus)=} {len(df)=}."
+
+    def test_Given_corpus_When_to_dataframe_Then_docs_are_added(self):
+        df = self.corpus.to_dataframe()
+        assert self.corpus.COL_DOC in df.columns, f"{self.corpus.COL_DOC} not found in exported dataframe."
+
+        mask, num_trues = random_mask(self.corpus)
+        subcorpus = self.corpus.cloned(mask)
+        df = subcorpus.to_dataframe()
+        assert subcorpus.COL_DOC in df.columns, f"{self.corpus.COL_DOC} not found in exported dataframe."
+
+    def test_Given_corpus_When_to_dataframe_Then_series_metas_are_added(self):
+        df = self.corpus.to_dataframe()
+        cols = set(df.columns)
+        doc_and_meta_ids = set([self.corpus.COL_DOC] +
+                               [meta_id for meta_id, meta in self.corpus.meta.items() if isinstance(meta, SeriesMeta)])
+        assert len(cols.intersection(doc_and_meta_ids)) == len(cols), \
+            f"Invalid exported dataframe columns. Expecting {doc_and_meta_ids}. Got {cols}"
+
+        mask, num_trues = random_mask(self.corpus)
+        subcorpus = self.corpus.cloned(mask)
+        df = subcorpus.to_dataframe()
+        cols = set(df.columns)
+        doc_and_meta_ids = set([subcorpus.COL_DOC] +
+                               [meta_id for meta_id, meta in self.corpus.meta.items() if isinstance(meta, SeriesMeta)])
+        assert len(cols.intersection(doc_and_meta_ids)) == len(cols), \
+            f"Invalid exported dataframe columns. Expecting {doc_and_meta_ids}. Got {cols}"
