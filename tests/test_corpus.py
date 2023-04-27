@@ -156,3 +156,22 @@ class TestCorpus(unittest.TestCase):
                                [meta_id for meta_id, meta in self.corpus.meta.items() if isinstance(meta, SeriesMeta)])
         assert len(cols.intersection(doc_and_meta_ids)) == len(cols), \
             f"Invalid exported dataframe columns. Expecting {doc_and_meta_ids}. Got {cols}"
+
+    def test_Given_corpus_When_getitem_Then_correct_doc_is_returned(self):
+        doc: str = self.corpus[0]
+        assert doc == self.corpus.docs().iloc[0]
+
+        start, stop = 4, 9
+        docs: list[str] = self.corpus[start:stop]
+        assert len(docs) == (9 - 4), \
+            f"getitem returned the wrong number of documents. Expected: {9 - 4}. Got: {len(docs)}"
+
+        mask, num_trues = random_mask(self.corpus)
+        subcorpus = self.corpus.cloned(mask)
+        doc: str = subcorpus[0]
+        assert doc == subcorpus.docs().iloc[0]
+
+        start, stop = 4, 9
+        docs: list[str] = subcorpus[start:stop]
+        assert len(docs) == (9 - 4), \
+            f"getitem returned the wrong number of documents. Expected: {9 - 4}. Got: {len(docs)}"

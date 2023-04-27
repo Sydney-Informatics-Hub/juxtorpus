@@ -131,7 +131,6 @@ class Corpus(Clonable):
                 meta_series.append(pd.Series(meta.series, name=meta_id))
         return pd.concat(meta_series, axis=1)
 
-
     def __init__(self, text: pd.Series, metas: Union[dict[str, Meta], MetaRegistry] = None, name: str = None):
         self._name = name if name else generate_name(self)
 
@@ -369,15 +368,14 @@ class Corpus(Clonable):
 
     def __getitem__(self, item):
         if isinstance(item, int):
-            mask = self._df.index == self._df.iloc[item].name
+            return self._df[self.COL_DOC].iloc[item]
         else:  # i.e. type=slice
             start = item.start
             stop = item.stop
             if start is None: start = 0
             if stop is None: stop = len(self._df)
             if item.step is not None: raise NotImplementedError("Slicing with step is currently not implemented.")
-            mask = self._df.iloc[start:stop].index
-        return self.cloned(mask)
+            return self._df[self.COL_DOC].iloc[start:stop]
 
 
 class SpacyCorpus(Corpus):
