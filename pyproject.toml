@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pandas = "^1.4.4"
+pandas = "^1.5.2"
 pyarrow = "^9.0.0"      # pandas memory efficient dep for str
 frozendict = "^2.3.4"
 # spacy
@@ -34,6 +34,7 @@ matplotlib = "^3.5.2"
 tqdm = "^4.64.0"
 plotly = "^5.11.0"
 wordcloud = "^1.8.2.2"
+pyldavis = "^3.4.0"   # from 3.4.1 onwards - requires pandas >= 2.0
 
 # misc
 coolname = "^2.2.0"
