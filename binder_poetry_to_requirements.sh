@@ -33,6 +33,7 @@ python3 -m venv $VENV_DIR
 
 echo "++ Activating virtual env..."
 source $VENV_DIR/bin/activate
+which python3
 
 echo "++ Installing dependencies..."
 pip install --upgrade pip
