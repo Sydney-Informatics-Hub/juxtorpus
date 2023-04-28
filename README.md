@@ -9,10 +9,14 @@ To run this notebook, click on the button below to launch a free binder instance
 [![Binder](https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg)](https://binderhub.atap-binder.cloud.edu.au/v2/gh/Sydney-Informatics-Hub/juxtorpus/feat/integration_concordance?labpath=notebooks%2Fdemos%2Fdigital_humanities_day%2Fdh_day.ipynb)
 
 
-## Development
 
-To set up the dev environment...
-
+# Contributors
+A quick way to set up your dev environment.
 ```shell
 ./init.dev.sh
+```
+
+To build the `requirements.txt` file for binder:
+```shell
+./binder_poetry_to_requirements.sh
 ```
