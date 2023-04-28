@@ -6,7 +6,7 @@ authors = ["jack <huen.chan@sydney.edu.au>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.11"
 pandas = "^1.5.2"
 pyarrow = "^9.0.0"      # pandas memory efficient dep for str
 frozendict = "^2.3.4"
