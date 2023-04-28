@@ -22,10 +22,12 @@ source $VENV_DIR/bin/activate
 
 echo "++ Installing dependencies..."
 if [[ -f $POETRY_FILE ]]; then
+  echo "++ Found poetry config file."
   pip install --upgrade pip
   pip install poetry
   poetry install --all-extras
 elif [[ -f $REQ_FILE ]]; then
+  echo "++ Poetry config file not found. Found requirements.txt."
   set +e
   pip install --upgrade pip
   pip install -r $REQ_FILE
