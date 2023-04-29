@@ -109,7 +109,8 @@ def prepare_text_df(
     df: pd.DataFrame,
     text_column: str = "text",
     id_column: str = None,
-    language_model: Union[str, spacy.language.Language] = "en_core_web_sm",
+    language_model: Union[str, spacy.language.Language] = spacy.blank('en'),
+    # language_model: Union[str, spacy.language.Language] = "en_core_web_sm",
 ) -> pd.DataFrame:
     """
     Our text processing functions expect a dataframe with
@@ -282,7 +283,7 @@ class ConcordanceLoader:
         return grouped
 
     def show(
-        self, language_model: Union[str, spacy.language.Language] = "en_core_web_sm"
+        self, language_model: Union[str, spacy.language.Language] = spacy.blank('en')#"en_core_web_sm"
     ):
         prepared_df = prepare_text_df(self.data, language_model=language_model)
         widget = ConcordanceLoaderWidget(
