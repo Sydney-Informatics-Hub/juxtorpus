@@ -59,11 +59,13 @@ class CorpusBuilderWidget(Widget):
                         dtype = config.get('dtype')
                         self.builder.add_metas(key, dtypes=dtype)
             button_output.clear_output()
+            
             try:
                 button.description = "Building..."
                 corpus = self.builder.build()
+                corpus.name = key_textbox.value
                 if self._on_build_callback is not None:
-                    self._on_build_callback(corpus)
+                    self._on_build_callback(corpus)                
                 button.description = "Done."
             except Exception as e:
                 with button_output: print(f"Failed to build. {e}")
