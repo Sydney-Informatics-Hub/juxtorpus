@@ -63,7 +63,8 @@ class CorpusBuilderWidget(Widget):
             try:
                 button.description = "Building..."
                 corpus = self.builder.build()
-                corpus.name = key_textbox.value
+                if corpus_name['name']:
+                    corpus.name = corpus_name['name']
                 if self._on_build_callback is not None:
                     self._on_build_callback(corpus)                
                 button.description = "Done."
