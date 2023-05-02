@@ -72,9 +72,12 @@ class SeriesMeta(Meta):
         info['top'] = str(vc.index.values[0])
         info['top_freq'] = vc.values[0]
 
-        uniqs = series.unique()
-        info['uniqs'] = ', '.join(str(u) for u in uniqs)
-        info['num_uniqs'] = len(uniqs)
+        try:
+            uniqs = series.unique()
+            info['uniqs'] = ', '.join(str(u) for u in uniqs)
+            info['num_uniqs'] = len(uniqs)
+        except:
+            pass
 
         # mean, min, max, quantiles
         if ((not pd.api.types.is_bool_dtype(series)) and
