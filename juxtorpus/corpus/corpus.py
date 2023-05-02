@@ -170,7 +170,7 @@ class Corpus(Clonable):
             new_name = name + '_'
             logger.info(f"{name} already exists. It renamed to {new_name}")
             name = new_name
-            _ALL_CORPUS_NAMES = _ALL_CORPUS_NAMES.union(name)
+        _ALL_CORPUS_NAMES = _ALL_CORPUS_NAMES.union(name)
         self._name = name
 
     @property
