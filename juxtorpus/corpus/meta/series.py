@@ -76,7 +76,10 @@ class SeriesMeta(Meta):
         info['num_uniqs'] = len(uniqs)
 
         # mean, min, max, quantiles
-        if pd.api.types.is_numeric_dtype(series) or pd.api.types.is_datetime64_any_dtype(series):
+        if ((not pd.api.types.is_bool_dtype(series)) and
+                (pd.api.types.is_numeric_dtype(series)
+                 or pd.api.types.is_datetime64_any_dtype(series))
+        ):
             info['mean'] = series.mean()
             info['std'] = series.std()
             info['min'] = series.min()
