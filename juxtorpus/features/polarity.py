@@ -120,7 +120,7 @@ class Polarity(object):
 
         add_legend = [Patch(facecolor='None', label='Size: Polarised and Rare'),
                       Patch(facecolor='None', label='Solid: Higher frequency to one corpus'),
-                      Patch(facecolor='None', label='Opaque: Similar frequency'), ]
+                      Patch(facecolor='None', label='Translucent: Similar frequency'), ]
         return pwc, add_legend
 
     def _wordcloud_tfidf(self, top: int, colours: tuple[str], tokeniser_func):
@@ -134,7 +134,7 @@ class Polarity(object):
 
         add_legend = [Patch(facecolor='None', label='Size: Tfidf of both'),
                       Patch(facecolor='None', label='Solid: Higher Tfidf to one corpus'),
-                      Patch(facecolor='None', label='Opaque: Similar tfidf')]
+                      Patch(facecolor='None', label='Translucent: Similar tfidf')]
         return pwc, add_legend
 
     def _wordcloud_log_likelihood(self, top: int, colours: tuple[str], tokeniser_func, ):
@@ -152,5 +152,5 @@ class Polarity(object):
 
         add_legend = [Patch(facecolor='None', label='Size: Polarised and Rare'),
                       Patch(facecolor='None', label='Solid: Higher log likelihood to one corpus'),
-                      Patch(facecolor='None', label='Opaque: Similar log likelihood')]
+                      Patch(facecolor='None', label='Translucent: Similar log likelihood')]
         return pwc, add_legend
