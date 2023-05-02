@@ -89,8 +89,7 @@ class SeriesMeta(Meta):
             info['75%'] = series.quantile(0.75)
             info['max'] = series.max()
 
-        df = pd.DataFrame(info, index=[self.id]).fillna('')
-        return df
+        return pd.DataFrame.from_dict(info, orient='index').T.fillna('').rename(index={0: self.id})
 
     def astype(self, type_: Union[str, np.dtype, pd.core.dtypes.dtypes.PandasExtensionDtype]):
         self._series = self.series.astype(type_)
