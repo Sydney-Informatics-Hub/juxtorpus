@@ -27,7 +27,7 @@ colorlog = "^6.7.0"
 # ml
 transformers = "^4.23.1"
 scipy = "^1.9.3"
-#torch = "^1.12.1"
+torch = "^2.0.0"
 scikit-learn = "^1.1.1"
 
 # viz
@@ -45,7 +45,7 @@ coolname = "^2.2.0"
 
 [tool.poetry.dev-dependencies]
 jupyterlab = "^3.6"
-#jupyterlab-vim = "^0.15"
+jupyterlab-vim = "^0.15"
 
 
 [build-system]
