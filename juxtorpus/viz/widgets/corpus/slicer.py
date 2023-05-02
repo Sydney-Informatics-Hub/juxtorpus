@@ -195,6 +195,8 @@ class SlicerWidget(Widget, ABC):
                 panel = self._decimal_panel(meta)
             elif pd.api.types.is_string_dtype(dtype):
                 panel = self._text_panel(meta)
+            elif pd.api.types.is_bool_dtype(dtype):
+                panel = self._bool_panel(meta)
             else:
                 raise NotImplementedError(f"No slicer panels for {dtype=}")
             panels[meta_id] = panel
@@ -218,6 +220,19 @@ class SlicerWidget(Widget, ABC):
                     value = float(value)
                 items.append(value)
             self._state.set_items(meta.id, items)
+
+        panel.observe(observe, names='value')
+        observe(None)
+        return panel
+
+    def _bool_panel(self, meta: SeriesMeta) -> Select:
+        panel = Select(
+            options=[True, False],
+            layout=Layout(height='100%', **no_horizontal_scroll)
+        )
+
+        def observe(_):
+            self._state.set_items(meta.id, panel.value)
 
         panel.observe(observe, names='value')
         observe(None)
