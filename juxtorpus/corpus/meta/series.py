@@ -1,6 +1,7 @@
 from .base import Meta
 from typing import Union
 import pandas as pd
+import numpy as np
 
 from juxtorpus.loader import LazySeries
 from juxtorpus.utils.utils_pandas import subindex_to_mask
@@ -90,6 +91,9 @@ class SeriesMeta(Meta):
 
         df = pd.DataFrame(info, index=[self.id]).fillna('')
         return df
+
+    def astype(self, type_: Union[str, np.dtype, pd.core.dtypes.dtypes.PandasExtensionDtype]):
+        self._series = self.series.astype(type_)
 
     def _show_uniqs(self, series) -> bool:
         uniqs = series.unique()
