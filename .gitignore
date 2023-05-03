@@ -148,3 +148,4 @@ mtcc.pdf
 notebooks/Untitled.ipynb
 #**/*.ipynb
 #**/*.csv
+notebooks/demos/*.csv
