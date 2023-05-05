@@ -116,12 +116,12 @@ class SpacyProcessor(Processor):
 
         Note: attribute name can come from custom extensions OR spacy built in. see built_in_component_attrs.
         """
-        for name, comp in self.nlp.pipeline:
-            _attr = comp.attr if isinstance(comp, Component) else self.built_in_component_attrs.get(name, None)
-            if _attr is None: continue
-            generator = corpus._df.loc[:, corpus.COL_DOC]
-            meta = DocMeta(id_=name, attr=_attr, nlp=self.nlp, docs=generator)
-            corpus._meta_registry[meta.id] = meta
+        # for name, comp in self.nlp.pipeline:
+        #     _attr = comp.attr if isinstance(comp, Component) else self.built_in_component_attrs.get(name, None)
+        #     if _attr is None: continue
+        #     generator = corpus._df.loc[:, corpus.COL_DOC]
+        #     meta = DocMeta(id_=name, attr=_attr, nlp=self.nlp, docs=generator)
+        #     corpus._meta_registry[meta.id] = meta
 
     def _create_episode(self) -> ProcessEpisode:
         return ProcessEpisode(
