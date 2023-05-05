@@ -11,7 +11,7 @@ import pandas as pd
 import spacy
 from IPython.display import display
 from textacy.extract import keyword_in_context
-from juxtorpus.corpus import Corpus
+from juxtorpus.corpus import Corpus, SpacyCorpus
 
 
 SEARCH_CSS_TEMPLATE = """
@@ -211,6 +211,7 @@ class ConcordanceLoader:
         elif self.type == "corpus":
             if not isinstance(self.df_input, Corpus): raise ValueError()
             df = self.df_input.to_dataframe().rename({self.df_input.COL_DOC: 'text'}, axis=1)
+            if isinstance(self.df_input, SpacyCorpus): df['text'] = df['text'].apply(lambda doc: doc.text)
             return self.chunk_a_dataframe(df)
 
 
@@ -1074,3 +1075,25 @@ class ConcordanceLoaderWidget:
             ]
         )
         return display(final_widget)
+
+
+if __name__ == '__main__':
+    import pandas as pd
+    from pathlib import Path
+    import spacy
+    from juxtorpus.corpus import Corpus
+    from juxtorpus.corpus.processors import process
+
+    use_cols = ['id', 'created_at', 'source', 'location', 'text', 'retweet_count', 'lang', 'possibly_sensitive',
+                'tweet_type']
+    dtypes = ['Int64', 'category', 'string', 'Int64', 'category', 'category', 'category']
+
+    df = pd.read_csv(Path('./notebooks/demos/Sample_Auspol_Tweets_Full.csv'),
+                     usecols=use_cols,
+                     dtype={'id': 'Int64', 'source': 'category', 'location': str, 'text': str, 'retweet_count': int,
+                            'lang': 'category', 'tweet_type': 'category'},
+                     nrows=100)
+    df['created_at'] = pd.to_datetime(df['created_at'])
+    corpus = process(Corpus.from_dataframe(df, col_doc='text', name='auspol'), nlp=spacy.load('en_core_web_sm'))
+    DataCSV = ConcordanceLoader(type='corpus', df_input=corpus)
+    DataCSV.show()
