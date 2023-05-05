@@ -38,10 +38,10 @@ which python3
 echo "++ Installing dependencies..."
 pip install --upgrade pip
 pip install poetry
-poetry install    # note no extras are installed. (e.g. apple dependencies.)
+poetry install --without dev # note no extras are installed. (e.g. apple dependencies.)
 
 echo "++ Exporting poetry dependencies to $REQ_FILE..."
-poetry export --without-hashes --format=requirements.txt > $REQ_FILE
+poetry export --without-hashes --without dev --format=requirements.txt > $REQ_FILE
 
 echo "++ Cleaning up..."
 rm -rf $VENV_DIR
