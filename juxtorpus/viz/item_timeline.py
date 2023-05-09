@@ -128,7 +128,10 @@ class ItemTimeline(Widget):
 
         self.MAX_NUM_TRACES = 100
 
-        self._update_metrics(self.sort_by, self.num_traces)
+        # stop words
+        self.no_stopwords = False
+
+        self._update_metrics(self.sort_by, self.num_traces, self.no_stopwords)
 
         # opacity
         self.FULL_OPACITY_TOP = 3  # top number of items with full opacity
@@ -152,14 +155,19 @@ class ItemTimeline(Widget):
             if sort_by not in self.sort_bys.keys(): raise ValueError(
                 f"{sort_by} not in {', '.join(self.sort_bys.keys())}")
             self.sort_by = sort_by
-            self._update_metrics(self.sort_by, self.num_traces)
+            self._update_metrics(self.sort_by, self.num_traces, self.no_stopwords)
 
     def set_top(self, top: int):
         if top < 1: raise ValueError(f"Must be > 1.")
         self.num_traces = top
-        self._update_metrics(self.sort_by, self.num_traces)
+        self._update_metrics(self.sort_by, self.num_traces, self.no_stopwords)
 
-    def _update_metrics(self, sort_by: str, top: int, no_stopwords: bool = False):
+    def set_no_stopwords(self, no_stopwords: bool):
+        if not isinstance(no_stopwords, bool): raise TypeError("no_stopwords must be a boolean.")
+        self.no_stopwords = no_stopwords
+        self._update_metrics(self.sort_by, self.num_traces, no_stopwords=self.no_stopwords)
+
+    def _update_metrics(self, sort_by: str, top: int, no_stopwords: bool):
         metric_series = self.sort_bys.get(sort_by)(self._df)
         if no_stopwords:
             sw_in_metric_series = [item for item in metric_series.index.tolist() if item in ENGLISH_STOP_WORDS]
@@ -277,14 +285,11 @@ class ItemTimeline(Widget):
 
     def _create_stopwords_checkbox(self, fig):
         sw_checkbox = widgets.Checkbox(description='Remove stopwords')
+        sw_checkbox.value = self.no_stopwords
 
         def observe_checkbox(event):
-            if event.get('new'):
-                self._update_metrics(self.sort_by, self.num_traces, no_stopwords=True)
-                self._update_traces(fig)
-            else:
-                self.set_sort_by(self.sort_by)
-                self._update_traces(fig)
+            self.set_no_stopwords(event.get('new'))
+            self._update_traces(fig)
 
         sw_checkbox.observe(observe_checkbox, names='value')
         return sw_checkbox
