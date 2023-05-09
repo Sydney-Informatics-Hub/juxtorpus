@@ -25,21 +25,17 @@ Properties:
 1. expose terms
 2. expose terms and their colours
 """
-import pandas as pd
 from pandas.api.types import is_datetime64_dtype
-import numpy as np
 from typing import Union, Optional
 import plotly.graph_objs as go
 from collections import namedtuple
 from functools import partial
-import re
-import colorsys
 import random
 import ipywidgets as widgets
 from IPython.display import display
 import pandas as pd
 
-from juxtorpus.viz import Viz, Widget
+from juxtorpus.viz import Widget
 from juxtorpus.corpus import Corpus
 from juxtorpus.corpus.freqtable import FreqTable
 from juxtorpus.corpus.meta import SeriesMeta
@@ -114,14 +110,14 @@ class ItemTimeline(Widget):
         assert is_datetime64_dtype(self._df.index), "DataFrame Index must be datetime."
         self.datetimes = self._df.index.to_list()
 
-        self.MODE_PEAK = 'PEAK'
-        self.MODE_CUMULATIVE = 'CUMULATIVE'
-        self.modes = {
-            self.MODE_PEAK: partial(pd.DataFrame.max, axis=0),  # across datetime
-            self.MODE_CUMULATIVE: partial(pd.DataFrame.sum, axis=0)
+        self.SORT_BY_PEAK = 'PEAK'
+        self.SORT_BY_TOTAL = 'TOTAL'
+        self.sort_bys = {
+            self.SORT_BY_PEAK: partial(pd.DataFrame.max, axis=0),  # across datetime
+            self.SORT_BY_TOTAL: partial(pd.DataFrame.sum, axis=0)
         }
-        self.DEFAULT_MODE = self.MODE_PEAK
-        self.mode = self.DEFAULT_MODE
+        self.DEFAULT_SORT_BY = self.SORT_BY_TOTAL
+        self.sort_by = self.DEFAULT_SORT_BY
         self._metric_series = None
         self.items = None
 
@@ -131,7 +127,7 @@ class ItemTimeline(Widget):
 
         self.MAX_NUM_TRACES = 100
 
-        self._update_metrics(self.mode, self.num_traces)
+        self._update_metrics(self.sort_by, self.num_traces)
 
         # opacity
         self.FULL_OPACITY_TOP = 3  # top number of items with full opacity
@@ -144,25 +140,25 @@ class ItemTimeline(Widget):
         """ Set the seed across all item timeline objects. """
         random.seed(seed)
 
-    def set_mode(self, mode: Optional[str]):
+    def set_sort_by(self, sort_by: Optional[str]):
         """ Sets the mode of the timeline as 'Peak' or 'Cumulative'. """
         # updates the items to display.
-        if mode is None:
-            self.mode = None
+        if sort_by is None:
+            self.sort_by = None
             self.items = self._df.columns.to_list()
         else:
-            mode = mode.upper()
-            if mode not in self.modes.keys(): raise ValueError(f"{mode} not in {', '.join(self.modes.keys())}")
-            self.mode = mode
-            self._update_metrics(self.mode, self.num_traces)
+            sort_by = sort_by.upper()
+            if sort_by not in self.sort_bys.keys(): raise ValueError(f"{sort_by} not in {', '.join(self.sort_bys.keys())}")
+            self.sort_by = sort_by
+            self._update_metrics(self.sort_by, self.num_traces)
 
     def set_top(self, top: int):
         if top < 1: raise ValueError(f"Must be > 1.")
         self.num_traces = top
-        self._update_metrics(self.mode, self.num_traces)
+        self._update_metrics(self.sort_by, self.num_traces)
 
     def _update_metrics(self, mode: str, top: int):
-        metric_series = self.modes.get(mode)(self._df)
+        metric_series = self.sort_bys.get(mode)(self._df)
         metric_series.sort_values(ascending=False, inplace=True)
         metric_series = metric_series.iloc[:top]
         self._metric_series = metric_series
@@ -226,14 +222,14 @@ class ItemTimeline(Widget):
 
     def _create_dropdown_widget(self, fig):
         dropdown = widgets.Dropdown(
-            options=[mode.capitalize() for mode in sorted(list(self.modes.keys()))],
-            value=self.mode.capitalize(),
-            description='Mode: ',
+            options=[mode.capitalize() for mode in sorted(list(self.sort_bys.keys()))],
+            value=self.sort_by.capitalize(),
+            description='Sort by: ',
             disabled=False,
         )
 
         def observe_dropdown(event):
-            self.set_mode(dropdown.value.upper())
+            self.set_sort_by(dropdown.value.upper())
             self._update_traces(fig)
 
         dropdown.observe(observe_dropdown)
@@ -334,7 +330,7 @@ class ItemTimeline(Widget):
 
     def _get_opacity(self, item):
         # no modes selected
-        if self.mode is None: return 1.0
+        if self.sort_by is None: return 1.0
         else:
             # top
             idx = self._metric_series.index.get_loc(item)
@@ -346,16 +342,16 @@ class ItemTimeline(Widget):
             return 0.1
 
     def _get_title(self, idx):
-        return f'Top {idx} {self.mode.capitalize()} items'
+        return f'Top {idx} {self.sort_by.capitalize()} items'
 
     def _get_texts(self, item: str, idx: int):
         number = self._metric_series.loc[item]
         if idx >= self.FULL_OPACITY_TOP:
             idx = -1  # i.e. no text annotation for this trace.
-        elif self.mode == self.MODE_PEAK:
+        elif self.sort_by == self.SORT_BY_PEAK:
             idx = self._df.loc[:, item].argmax()
-        elif self.mode == self.MODE_CUMULATIVE:
+        elif self.sort_by == self.SORT_BY_TOTAL:
             idx = len(self.datetimes) - 1
         else:
-            raise RuntimeError(f"Unsupported Mode. {self.mode} not in {self.modes.keys()}. This should not happen.")
+            raise RuntimeError(f"Unsupported Mode. {self.sort_by} not in {self.sort_bys.keys()}. This should not happen.")
         return ['' if i != idx else str(number) for i in range(len(self.datetimes))]
