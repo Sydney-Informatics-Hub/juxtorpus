@@ -39,7 +39,7 @@ import ipywidgets as widgets
 from IPython.display import display
 import pandas as pd
 
-from juxtorpus.viz import Viz
+from juxtorpus.viz import Viz, Widget
 from juxtorpus.corpus import Corpus
 from juxtorpus.corpus.freqtable import FreqTable
 from juxtorpus.corpus.meta import SeriesMeta
@@ -49,7 +49,7 @@ TNUMERIC = Union[int, float]
 TPLOTLY_RGB_COLOUR = str
 
 
-class ItemTimeline(Viz):
+class ItemTimeline(Widget):
     """ ItemTimeline
     This visualisation class plots a number of items and their associated metric across a timeline.
     The two modes for the metrics are:
@@ -168,7 +168,7 @@ class ItemTimeline(Viz):
         self._metric_series = metric_series
         self.items = self._metric_series.index.to_list()
 
-    def render(self):
+    def widget(self):
         fig = self._build_main_figure()
         display(self._build_widgets(fig))
         return fig
