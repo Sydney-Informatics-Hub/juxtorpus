@@ -131,6 +131,9 @@ class ItemTimeline(Widget):
         # stop words
         self.no_stopwords = False
 
+        # search bar states
+        self.__first_search = True
+
         self._update_metrics(self.sort_by, self.num_traces, self.no_stopwords)
 
         # opacity
@@ -258,13 +261,19 @@ class ItemTimeline(Widget):
         @debounce(0.1)
         def observe_search(event):
             query = event.get('new')
-            # pattern = re.compile(query, re.IGNORECASE)
+            if self.__first_search:
+                # deselect all -- this is needed for intuitive search. i.e. when searching for multiple items.
+                self.__first_search = False
+                with fig.batch_update():
+                    for trace in fig.data: trace.visible = 'legendonly'
             with fig.batch_update():
                 for trace in fig.data:
-                    if query.upper() in trace.name.upper():
+                    if query.upper() == trace.name.upper():
                         trace.visible = True
+                    elif query.upper() in trace.name.upper():
+                        trace.visible = 'legendonly' if trace.visible is not True else True
                     else:
-                        trace.visible = False
+                        trace.visible = False if trace.visible is not True else True
 
         search_bar.observe(observe_search, names='value')
         return search_bar
