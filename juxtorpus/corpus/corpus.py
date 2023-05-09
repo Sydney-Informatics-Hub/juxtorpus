@@ -6,6 +6,7 @@ from spacy import Language
 from sklearn.feature_extraction.text import CountVectorizer
 import re
 import coolname
+import numpy as np
 
 from juxtorpus.interfaces.clonable import Clonable
 from juxtorpus.corpus.slicer import CorpusSlicer, SpacyCorpusSlicer
@@ -32,6 +33,12 @@ def generate_name(corpus: 'Corpus') -> str:
             continue
         else:
             return name
+
+
+def ensure_docs(docs: pd.Series):
+    docs.name = Corpus.COL_DOC  # set default doc name
+    docs = docs.astype(str)  # handle NA
+    return docs
 
 
 class Corpus(Clonable):
@@ -134,8 +141,7 @@ class Corpus(Clonable):
     def __init__(self, text: pd.Series, metas: Union[dict[str, Meta], MetaRegistry] = None, name: str = None):
         self._name = name if name else generate_name(self)
 
-        text.name = self.COL_DOC
-        self._df: pd.DataFrame = pd.DataFrame(text, columns=[self.COL_DOC])
+        self._df: pd.DataFrame = pd.DataFrame(ensure_docs(text), columns=[self.COL_DOC])
         # ensure initiated object is well constructed.
         assert len(list(filter(lambda x: x == self.COL_DOC, self._df.columns))) <= 1, \
             f"More than 1 {self.COL_DOC} column in dataframe."
@@ -269,7 +275,8 @@ class Corpus(Clonable):
 
     def sample(self, n: int, rand_stat=None) -> 'Corpus':
         """ Uniformly sample from the corpus. """
-        mask = self._df.isna().squeeze()  # Return a mask of all False
+        # mask = self._df.isna().squeeze()  # Return a mask of all False
+        mask = pd.Series(np.zeros(len(self)), dtype=bool, index=self._df.index)
         mask[mask.sample(n=n, random_state=rand_stat).index] = True
         return self.cloned(mask)
 
