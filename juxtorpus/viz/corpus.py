@@ -31,7 +31,7 @@ def wordclouds(corpora, names: list[str], max_words: int = 50, metric: str = 'tf
     plt.show()
 
 
-def wordcloud(corpus, max_words: int = 50, metric: str = 'tf', word_type: str = 'word'):
+def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 'word'):
     wc = _wordcloud(corpus, max_words, metric, word_type)
     h, w = 16, 16 * 1.5
     plt.figure(figsize=(h, w))
