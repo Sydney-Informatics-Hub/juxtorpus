@@ -381,6 +381,7 @@ class ItemTimeline(Widget):
         return f'Top {idx} {self.sort_by.capitalize()} items'
 
     def _get_texts(self, item: str, idx: int):
+        """ Return the annotation when mouse is hovered over the series."""
         number = self._metric_series.loc[item]
         if idx >= self.FULL_OPACITY_TOP:
             idx = -1  # i.e. no text annotation for this trace.
