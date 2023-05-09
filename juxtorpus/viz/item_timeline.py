@@ -34,6 +34,7 @@ import random
 import ipywidgets as widgets
 from IPython.display import display
 import pandas as pd
+from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS
 
 from juxtorpus.viz import Widget
 from juxtorpus.corpus import Corpus
@@ -148,7 +149,8 @@ class ItemTimeline(Widget):
             self.items = self._df.columns.to_list()
         else:
             sort_by = sort_by.upper()
-            if sort_by not in self.sort_bys.keys(): raise ValueError(f"{sort_by} not in {', '.join(self.sort_bys.keys())}")
+            if sort_by not in self.sort_bys.keys(): raise ValueError(
+                f"{sort_by} not in {', '.join(self.sort_bys.keys())}")
             self.sort_by = sort_by
             self._update_metrics(self.sort_by, self.num_traces)
 
@@ -157,8 +159,11 @@ class ItemTimeline(Widget):
         self.num_traces = top
         self._update_metrics(self.sort_by, self.num_traces)
 
-    def _update_metrics(self, mode: str, top: int):
-        metric_series = self.sort_bys.get(mode)(self._df)
+    def _update_metrics(self, sort_by: str, top: int, no_stopwords: bool = False):
+        metric_series = self.sort_bys.get(sort_by)(self._df)
+        if no_stopwords:
+            sw_in_metric_series = [item for item in metric_series.index.tolist() if item in ENGLISH_STOP_WORDS]
+            metric_series = metric_series.drop(sw_in_metric_series, axis=0)
         metric_series.sort_values(ascending=False, inplace=True)
         metric_series = metric_series.iloc[:top]
         self._metric_series = metric_series
@@ -180,12 +185,15 @@ class ItemTimeline(Widget):
         return fig
 
     def _build_widgets(self, fig):
-        mode_dropdown = self._create_dropdown_widget(fig)
-        item_search = self._create_search_bar(fig)
         trace_slider = self._create_num_traces_slider(fig)
-        trace_slider.layout.width = '45%'
+        trace_slider.layout.width = '35%'
+        sw_checkbox = self._create_stopwords_checkbox(fig)
+        sw_checkbox.layout.width = '150px'
+        sw_checkbox.style = {'description_width': '0px'}
         pad_box = widgets.Box(layout=widgets.Layout(width='5%'))
-        return widgets.HBox([trace_slider, pad_box, mode_dropdown, item_search],
+        sort_by_dropdown = self._create_dropdown_widget(fig)
+        item_search = self._create_search_bar(fig)
+        return widgets.HBox([trace_slider, sw_checkbox, pad_box, sort_by_dropdown, item_search],
                             layout=widgets.Layout(width='100%', height='40px'))
 
     @staticmethod
@@ -266,6 +274,20 @@ class ItemTimeline(Widget):
 
         slider.observe(observe_slider, names='value')
         return slider
+
+    def _create_stopwords_checkbox(self, fig):
+        sw_checkbox = widgets.Checkbox(description='Remove stopwords')
+
+        def observe_checkbox(event):
+            if event.get('new'):
+                self._update_metrics(self.sort_by, self.num_traces, no_stopwords=True)
+                self._update_traces(fig)
+            else:
+                self.set_sort_by(self.sort_by)
+                self._update_traces(fig)
+
+        sw_checkbox.observe(observe_checkbox, names='value')
+        return sw_checkbox
 
     @staticmethod
     def _add_toggle_all_selection_layer(fig):
@@ -353,5 +375,6 @@ class ItemTimeline(Widget):
         elif self.sort_by == self.SORT_BY_TOTAL:
             idx = len(self.datetimes) - 1
         else:
-            raise RuntimeError(f"Unsupported Mode. {self.sort_by} not in {self.sort_bys.keys()}. This should not happen.")
+            raise RuntimeError(
+                f"Unsupported Mode. {self.sort_by} not in {self.sort_bys.keys()}. This should not happen.")
         return ['' if i != idx else str(number) for i in range(len(self.datetimes))]
