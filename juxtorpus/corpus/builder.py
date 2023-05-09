@@ -108,6 +108,7 @@ class CorpusBuilder(Widget):
         self._sep = ','
         self._col_text = None
         self._dtype_text = pd.StringDtype('pyarrow')
+        self._name = None
 
         # validate column alignments
         self._columns = self._prompt_validated_columns(self._paths)
@@ -138,7 +139,8 @@ class CorpusBuilder(Widget):
         return self._columns
 
     def head(self, n: int = 3, cols: Optional[Union[str, list[str]]] = None):
-        return pd.read_csv(self._paths[0], nrows=n, sep=self._sep, usecols=cols)
+        if cols is None: cols = self.columns
+        return self.read(self._paths[0], nrows=n, usecols=cols)
 
     def summary(self):
         all_cols = pd.Series(sorted(list(self._columns)), name='All Columns')
@@ -168,7 +170,7 @@ class CorpusBuilder(Widget):
             df.loc[row.Index, 'Dtype'] = dtype
 
         df.sort_index(axis=0, inplace=True)
-        return df.sort_index(axis=0, ascending=True)
+        return df.sort_index(axis=0, ascending=True).T
 
     def add_metas(self, columns: Union[str, list[str]],
                   dtypes: Union[None, str, list[str]] = None,
@@ -236,7 +238,7 @@ class CorpusBuilder(Widget):
         self.remove_metas(columns)
         self.add_metas(columns, dtypes, lazy)
 
-    def set_text_column(self, column: str):
+    def set_document_column(self, column: str):
         if column not in self._columns:
             raise KeyError(
                 f"Column: '{column}' not found. Use {self.summary.__name__} to preview the columns in the dataframe")
@@ -261,6 +263,9 @@ class CorpusBuilder(Widget):
             raise ValueError("nrows must be a positive integer. Set as None to remove.")
         self._nrows = nrows
 
+    def set_name(self, name: str):
+        self._name = name
+
     def set_text_preprocessors(self, preprocess_callables: list[Callable]):
         """ Set a list of preprocessors for your text data.
 
@@ -278,12 +283,12 @@ class CorpusBuilder(Widget):
 
     def build(self) -> Corpus:
         if not self.text_column_is_set():
-            raise ValueError(f"You must set the text column. Try calling {self.set_text_column.__name__} first.")
+            raise ValueError(f"You must set the text column. Try calling {self.set_document_column.__name__} first.")
         metas = dict()
         metas = self._build_lazy_metas(metas)
         metas, texts = self._build_series_meta_and_text(metas)
         texts = texts.apply(self._preprocess)
-        return Corpus(texts, metas=metas)
+        return Corpus(texts, metas=metas, name=self._name)
 
     def _build_lazy_metas(self, metas: dict):
         # build lazies
@@ -325,7 +330,7 @@ class CorpusBuilder(Widget):
         for col in datetime_cols: df[col] = pd.to_datetime(df[col])
         if self._col_text not in df.columns:
             raise KeyError(f"{self._col_text} column is missing. This column is compulsory. "
-                           f"Did you call {self.set_text_column.__name__}?")
+                           f"Did you call {self.set_document_column.__name__}?")
 
         # set up corpus dependencies here
         series_text = df.loc[:, self._col_text]

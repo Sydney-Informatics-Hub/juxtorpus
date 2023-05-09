@@ -18,6 +18,7 @@ class OperationsWidget(Widget):
         self._checkbox_to_op = dict()  # note: this must be an ordered dict.
         self._preview = self._sliced_preview(' ')
         self._current_subcorpus_mask = None
+        self._corpus_name = None
 
         # callbacks
         self._on_slice_callback = lambda sliced: sliced
@@ -29,10 +30,16 @@ class OperationsWidget(Widget):
 
     def widget(self):
         """ Returns a checkbox table with a Subcorpus Preview and Slice button next to it."""
+        def _on_click_key_textbox(event):
+            self._corpus_name = event.get('new')
+
         ops_table = self._ops_table()
+        key_textbox = Text(description='Name:', placeholder='Corpus Name (randomly generates if not supplied)')
         vbox_slice = VBox([self._preview, self._btn_slice],
                           layout=Layout(height='100%', **no_horizontal_scroll))
-        return HBox([ops_table, vbox_slice], layout=Layout(**no_horizontal_scroll))
+        
+        self._corpus_name = key_textbox.observe(_on_click_key_textbox, names='value')
+        return HBox([ops_table, key_textbox, vbox_slice], layout=Layout(**no_horizontal_scroll))
 
     def _populate_checkbox_to_op_map(self):
         for op in self.ops:
@@ -60,7 +67,7 @@ class OperationsWidget(Widget):
             at_least_one_checked = sum(cb.value for cb in self._checkbox_to_op.keys()) > 0
             self._btn_slice.disabled = not self._current_subcorpus_mask.sum() > 0 or not at_least_one_checked
 
-        checkbox.observe(_observe, names='value')
+        self._corpus_name = checkbox.observe(_observe, names='value')
         return checkbox
 
     def _slice_button(self):
@@ -71,6 +78,8 @@ class OperationsWidget(Widget):
         def _on_click(event):
             # NOTE: this depends on observer on operations checkboxes, else mask won't be updated.
             subcorpus = self.corpus.cloned(self._current_subcorpus_mask)
+            if self._corpus_name:
+                subcorpus.name = self._corpus_name 
             self._sliced = subcorpus
             self._on_slice_callback(subcorpus)
             button.description = "Done."

@@ -22,7 +22,7 @@ class FileUploadWidget(Widget):
     DESCRIPTION = "Upload your files here.\n({})"
     ERR_FAILED_UPLOAD = "File upload unsuccessful. Please try again!."
 
-    default_accepted_extensions = ['.csv', '.zip']
+    default_accepted_extensions = ['.csv', '.xlsx', '.zip']
 
     def __init__(self, dir_path: pathlib.Path = None, accept_extensions: list[str] = None):
         if accept_extensions is None:

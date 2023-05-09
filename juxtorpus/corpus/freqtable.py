@@ -25,7 +25,7 @@ class FreqTable(object):
         if len(set(terms)) != len(terms): raise ValueError(f"Terms must be unique.")
 
         self._COL_FREQ = 'freq'
-        self._series: pd.Series = pd.Series(freqs, index=terms, dtype=np.int, name=self._COL_FREQ)
+        self._series: pd.Series = pd.Series(freqs, index=terms, dtype=np.integer, name=self._COL_FREQ)
 
     @property
     def series(self):
