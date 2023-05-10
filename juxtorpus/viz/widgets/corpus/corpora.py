@@ -91,15 +91,15 @@ class CorporaWidget(Widget, ABC):
                     cb.value = cb == checked
 
     def _toggle_builder_button(self):
-        button = Button(description='Show Builder')
+        button = Button(description='I Want To Build a New Corpus')
 
         def _on_click_toggle(_):
             if self._builder_appeared():
                 self._widget.children = (self._widget.children[0], self._create_empty(), *self._widget.children[2:])
-                button.description = "Show Builder"
+                button.description = "I Want To Build a New Corpus"
             else:
                 self._widget.children = (self._widget.children[0], self._builder.widget(), *self._widget.children[2:])
-                button.description = "Hide Builder"
+                button.description = "Hide"
 
         button.on_click(_on_click_toggle)
         return button
