@@ -6,6 +6,7 @@ import math
 
 from juxtorpus.viz import Widget
 from juxtorpus.viz.widgets import FileUploadWidget
+from juxtorpus.corpus import generate_name
 
 f_selector_layout = {'width': '98%', 'height': '100%'}
 f_uploader_layout = {'width': '98%', 'height': '50px'}
@@ -28,6 +29,8 @@ class CorpusBuilderWidget(Widget):
         self.builder = builder
         self._on_build_callback = lambda corpus: None
 
+        self._corpus_name_placeholder = ''
+
     def widget(self):
         top_labels = [('id', '30%'), ('document', '15%'), ('meta', '15%'), ('data type', '30%')]
         top_labels = HBox(
@@ -38,14 +41,14 @@ class CorpusBuilderWidget(Widget):
         panel = [top_labels] + [self._create_checkbox(col, config.get('text'), config.get('meta'), config)
                                 for col, config in checkbox_configs.items()]
 
-        key_textbox = Text(description='Name:', placeholder='Corpus Name (randomly generates if not supplied)')
-        corpus_name = dict(name=None)
+        self._corpus_name_placeholder = generate_name()
+        key_textbox = Text(description='Name:', placeholder=self._corpus_name_placeholder)
 
         button = Button(description='Build')
         button_output = Output(layout=Layout(overflow='scroll hidden'))
 
         def _on_click_key_textbox(event):
-            corpus_name.update(name=event.get('new'))
+            self._corpus_name_placeholder = event.get('new')
 
         def _on_click_build_corpus(_):
             if button.description in ('Done', 'Retry'):
@@ -66,8 +69,7 @@ class CorpusBuilderWidget(Widget):
                 button.description = "Building..."
                 button.button_style = 'info'
                 corpus = self.builder.build()
-                if corpus_name['name']:
-                    corpus.name = corpus_name['name']
+                corpus.name = self._corpus_name_placeholder
                 if self._on_build_callback is not None:
                     self._on_build_callback(corpus)
                 button.description = "Done"

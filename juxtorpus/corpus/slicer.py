@@ -7,7 +7,6 @@ import re
 
 from juxtorpus.corpus.meta import *
 from juxtorpus.viz import Widget
-from juxtorpus.viz.widgets.corpus.slicer import SlicerWidget
 from juxtorpus.corpus.operation import *
 import colorlog
 
@@ -100,6 +99,7 @@ class CorpusSlicer(Widget):
         return ((gid, self.corpus.cloned(mask)) for gid, mask in meta.groupby(grouper))
 
     def widget(self):
+        from juxtorpus.viz.widgets.corpus.slicer import SlicerWidget
         return SlicerWidget(self.corpus).widget()
 
 
