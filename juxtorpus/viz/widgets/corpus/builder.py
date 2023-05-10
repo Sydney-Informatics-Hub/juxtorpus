@@ -48,8 +48,9 @@ class CorpusBuilderWidget(Widget):
             corpus_name.update(name=event.get('new'))
 
         def _on_click_build_corpus(_):
-            if button.description == 'Done.':
+            if button.description in ('Done', 'Retry'):
                 button.description = 'Build'
+                button.button_style = ''
                 return
             for key, config in checkbox_configs.items():
                 if config.get('text'):
@@ -59,18 +60,24 @@ class CorpusBuilderWidget(Widget):
                         dtype = config.get('dtype')
                         self.builder.add_metas(key, dtypes=dtype)
             button_output.clear_output()
-            
+
             try:
+                button.disabled = True
                 button.description = "Building..."
+                button.button_style = 'info'
                 corpus = self.builder.build()
                 if corpus_name['name']:
                     corpus.name = corpus_name['name']
                 if self._on_build_callback is not None:
-                    self._on_build_callback(corpus)                
-                button.description = "Done."
+                    self._on_build_callback(corpus)
+                button.description = "Done"
+                button.button_style = 'success'
+                button.disabled = False
             except Exception as e:
                 with button_output: print(f"Failed to build. {e}")
-                button.description = 'Build'
+                button.description = 'Retry'
+                button.button_style = 'warning'
+                button.disabled = False
                 return
 
         key_textbox.observe(_on_click_key_textbox, names='value')
@@ -195,12 +202,28 @@ class CorpusBuilderFileUploadWidget(Widget):
         vbox = VBox([hbox_uploader, Box()])
 
         def on_click_confirm(_):
-            from juxtorpus.corpus import CorpusBuilder
-            selected_files = [d.get('path') for d in self._files.values() if d.get('selected')]
-            if len(selected_files) <= 0: return
-            builder = CorpusBuilder(selected_files)
-            builder.set_callback(self._on_build_callback)
-            vbox.children = (vbox.children[0], builder.widget())
+            if button_confirm.description in ('Done', 'Retry'):
+                button_confirm.disabled = False
+                button_confirm.description = 'Confirm'
+                button_confirm.button_style = ''
+                return
+            try:
+                button_confirm.disabled = True
+                button_confirm.description = 'Loading...'
+                button_confirm.button_style = 'info'
+                from juxtorpus.corpus import CorpusBuilder
+                selected_files = [d.get('path') for d in self._files.values() if d.get('selected')]
+                if len(selected_files) <= 0: return
+                builder = CorpusBuilder(selected_files)
+                builder.set_callback(self._on_build_callback)
+                vbox.children = (vbox.children[0], builder.widget())
+                button_confirm.description = 'Done'
+                button_confirm.button_style = 'success'
+                button_confirm.disabled = False
+            except Exception:
+                button_confirm.description = 'Retry'
+                button_confirm.button_style = 'warning'
+                button_confirm.disabled = False
 
         button_confirm.on_click(on_click_confirm)
         return vbox
