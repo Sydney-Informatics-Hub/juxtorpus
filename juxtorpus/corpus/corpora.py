@@ -19,6 +19,7 @@ class Corpora(Container, Widget, Viz, ABC):
     def __init__(self, list_of_corpus: Optional[list[Corpus]] = None):
         self._map = {id(c): c for c in list_of_corpus} if list_of_corpus else dict()
         self._viz = CorporaViz(self)
+        self._widget = CorporaWidget(self)
 
     @property
     def viz(self):
@@ -65,7 +66,7 @@ class Corpora(Container, Widget, Viz, ABC):
 
     def widget(self):
         """ Returns a dashboard of existing corpus """
-        return CorporaWidget(self).widget()
+        return self._widget.widget()
 
     def render(self):
         """ Visualise all the corpus currently contained within the Corpora. """
