@@ -115,10 +115,11 @@ class CorporaWidget(Widget, ABC):
         self._refresh_corpus_selector()
 
     def _refresh_corpus_selector(self):
+        self._selector = self._corpus_selector()
         if self._slicer_appeared():
-            self._widget.children = (*self._widget.children[:2], self._corpus_selector(), *self._widget.children[3:])
+            self._widget.children = (*self._widget.children[:2], self._selector, *self._widget.children[3:])
         else:
-            self._widget.children = (*self._widget.children[:2], self._corpus_selector(),)
+            self._widget.children = (*self._widget.children[:2], self._selector,)
 
     def _builder_appeared(self):
         return not self._is_empty(self._widget.children[1])
