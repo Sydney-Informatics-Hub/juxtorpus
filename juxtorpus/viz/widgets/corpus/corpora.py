@@ -33,6 +33,7 @@ class CorporaWidget(Widget, ABC):
         self._builder.set_callback(self._on_build_add_to_self)
 
         self._selector: VBox = self._corpus_selector()
+        self._selected_checkbox = None
 
         self._widget = VBox([self._toggle_builder_button(), self._create_empty(), self._selector],
                             layout=Layout(grid_template_columns='repeat(2, 1fr)'))
@@ -71,6 +72,7 @@ class CorporaWidget(Widget, ABC):
         value, owner = event.get('new'), event.get('owner')
         if value:
             selected = self.corpora.get(owner.description.strip())
+            self._selected_checkbox = owner
             if not selected:
                 raise RuntimeError(f"Corpus: {owner.description} does not exist. This should not happen.")
             self._toggle_checkboxes(owner)
@@ -88,7 +90,7 @@ class CorporaWidget(Widget, ABC):
         for hboxes in self._selector.children:
             for cb in hboxes.children:
                 if isinstance(cb, Checkbox):
-                    cb.value = cb == checked
+                    cb.value = cb.description == checked.description
 
     def _toggle_builder_button(self):
         button = Button(description='I Want To Build a New Corpus',
@@ -116,6 +118,7 @@ class CorporaWidget(Widget, ABC):
 
     def _refresh_corpus_selector(self):
         self._selector = self._corpus_selector()
+        self._toggle_checkboxes(self._selected_checkbox)
         if self._slicer_appeared():
             self._widget.children = (*self._widget.children[:2], self._selector, *self._widget.children[3:])
         else:
