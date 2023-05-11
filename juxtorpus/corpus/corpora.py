@@ -8,6 +8,7 @@ from juxtorpus.corpus import Corpus
 from juxtorpus.interfaces import Container
 from juxtorpus.viz import Widget, Viz
 from juxtorpus.viz.widgets import CorporaWidget
+from juxtorpus.corpus.viz import CorporaViz
 
 
 class Corpora(Container, Widget, Viz, ABC):
@@ -17,6 +18,11 @@ class Corpora(Container, Widget, Viz, ABC):
 
     def __init__(self, list_of_corpus: Optional[list[Corpus]] = None):
         self._map = {id(c): c for c in list_of_corpus} if list_of_corpus else dict()
+        self._viz = CorporaViz(self)
+
+    @property
+    def viz(self):
+        return self._viz
 
     def _find_corpus(self, name: str) -> Optional[Corpus]:
         """ Return the corpus in this container based on name. """

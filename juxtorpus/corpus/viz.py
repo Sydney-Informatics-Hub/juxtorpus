@@ -1,6 +1,6 @@
 import weakref as wr
 
-from juxtorpus.viz.corpus import wordcloud, timeline
+from juxtorpus.viz.corpus import wordcloud, timeline, wordclouds, timelines
 
 
 class CorpusViz(object):
@@ -14,3 +14,16 @@ class CorpusViz(object):
 
     def timeline(self, datetime_meta: str, freq: str):
         return timeline(self._corpus(), datetime_meta=datetime_meta, freq=freq)
+
+
+class CorporaViz(object):
+    def __init__(self, corpora):
+        self._corpora = wr.ref(corpora)
+
+    def wordclouds(self, names: list[str], metric: str = 'tf', max_words: int = 50, word_type: str = 'word'):
+        return wordclouds(corpora=self._corpora(), names=names,
+                          metric=metric, max_words=max_words, word_type=word_type)
+
+    def timelines(self, names: list[str], datetime_meta: str, freq: str):
+        return timelines(corpora=self._corpora(), names=names,
+                         datetime_meta=datetime_meta, freq=freq)
