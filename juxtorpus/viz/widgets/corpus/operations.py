@@ -6,6 +6,7 @@ from juxtorpus.viz import Widget
 from juxtorpus.corpus.operation import Operation
 from juxtorpus.corpus.operations import Operations
 from juxtorpus.viz.style.ipyw import *
+from juxtorpus.corpus import generate_name
 
 
 class OperationsWidget(Widget):
@@ -30,16 +31,23 @@ class OperationsWidget(Widget):
 
     def widget(self):
         """ Returns a checkbox table with a Subcorpus Preview and Slice button next to it."""
-        def _on_click_key_textbox(event):
-            self._corpus_name = event.get('new')
 
         ops_table = self._ops_table()
-        key_textbox = Text(description='Name:', placeholder='Corpus Name (randomly generates if not supplied)')
-        vbox_slice = VBox([self._preview, self._btn_slice],
+
+        self._corpus_name = generate_name()
+        key_textbox = Text(description='Name:', placeholder=self._corpus_name)
+
+        vertical_pad = Box(height='50px')
+        vbox_slice = VBox([HBox([self._preview,
+                                 VBox([vertical_pad, key_textbox], layout=Layout(**no_horizontal_scroll))]),
+                           self._btn_slice],
                           layout=Layout(height='100%', **no_horizontal_scroll))
-        
-        self._corpus_name = key_textbox.observe(_on_click_key_textbox, names='value')
-        return HBox([ops_table, key_textbox, vbox_slice], layout=Layout(**no_horizontal_scroll))
+
+        key_textbox.observe(self._on_click_name_textbox, names='value')
+        return HBox([ops_table, vbox_slice], layout=Layout(**no_horizontal_scroll))
+
+    def _on_click_name_textbox(self, event):
+        self._corpus_name = event.get('new')
 
     def _populate_checkbox_to_op_map(self):
         for op in self.ops:
@@ -98,7 +106,7 @@ class OperationsWidget(Widget):
         """ Returns the preview box of sliced corpus before slicing. """
         return HTML(self._preview_text(text),
                     placeholder='Corpus Size: ',
-                    layout=Layout(height='100%', **no_horizontal_scroll))
+                    layout=Layout(height='100%', width='50%'))
 
     def _update_current_mask(self):
         self._current_subcorpus_mask = self.mask()
