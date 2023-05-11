@@ -76,13 +76,20 @@ class OperationsWidget(Widget):
                         layout=Layout(height='30px', **no_horizontal_scroll))
 
         def _on_click(event):
+            if button.description == 'Done':
+                button.description = 'Slice'
+                button.button_style = ''
+                return
             # NOTE: this depends on observer on operations checkboxes, else mask won't be updated.
+            button.description = 'Slicing...'
+            button.button_style = 'info'
             subcorpus = self.corpus.cloned(self._current_subcorpus_mask)
             if self._corpus_name:
-                subcorpus.name = self._corpus_name 
+                subcorpus.name = self._corpus_name
             self._sliced = subcorpus
             self._on_slice_callback(subcorpus)
-            button.description = "Done."
+            button.description = "Done"
+            button.button_style = 'success'
 
         button.on_click(_on_click)
         return button
