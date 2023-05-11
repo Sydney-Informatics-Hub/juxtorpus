@@ -1,7 +1,7 @@
 from typing import Optional
 from abc import ABC
 
-from ipywidgets import Label, Layout, HBox, GridBox, VBox, Button
+from ipywidgets import Label, Layout, HBox, GridBox, VBox, Button, HTML
 from ipywidgets import Checkbox
 from juxtorpus.viz.style.ipyw import center_style, corpus_id_layout, size_layout, parent_layout, hbox_style
 from juxtorpus.viz import Widget
@@ -21,9 +21,9 @@ class CorporaWidget(Widget, ABC):
     """
 
     _corpus_selector_labels = [
-        Label("Corpus ID", layout=Layout(**corpus_id_layout, **center_style)),
-        Label("Size", layout=Layout(**size_layout, **center_style)),
-        Label("Parent", layout=Layout(**parent_layout, **center_style))
+        HTML("<b>Corpus</b>", layout=Layout(**corpus_id_layout, **center_style)),
+        HTML("<b>Size</b>", layout=Layout(**size_layout, **center_style)),
+        HTML("<b>Parent</b>", layout=Layout(**parent_layout, **center_style))
     ]
 
     def __init__(self, corpora: 'Corpora'):
