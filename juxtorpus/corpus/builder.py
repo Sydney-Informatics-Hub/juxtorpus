@@ -327,7 +327,8 @@ class CorpusBuilder(Widget):
             dfs.append(df)
         df = row_concat(dfs, ignore_index=True)
 
-        for col in datetime_cols: df[col] = pd.to_datetime(df[col])
+        for col in datetime_cols:
+            df[col] = pd.to_datetime(df[col]).dt.tz_localize(None)  # NOTE: timezone info discarded.
         if self._col_text not in df.columns:
             raise KeyError(f"{self._col_text} column is missing. This column is compulsory. "
                            f"Did you call {self.set_document_column.__name__}?")

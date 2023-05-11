@@ -96,7 +96,7 @@ class SeriesMeta(Meta):
 
     def astype(self, type_: Union[str, np.dtype, pd.core.dtypes.dtypes.PandasExtensionDtype], strftime=None):
         if type_ == 'datetime':
-            self._series = pd.to_datetime(self.series, format=strftime)
+            self._series = pd.to_datetime(self.series, format=strftime).dt.tz_localize(None) # NOTE: timezone-UNaware.
         else:
             self._series = self.series.astype(type_)
 
