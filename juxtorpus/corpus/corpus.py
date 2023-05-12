@@ -180,6 +180,9 @@ class Corpus(Clonable):
         _ALL_CORPUS_NAMES = _ALL_CORPUS_NAMES.union(name)
         self._name = name
 
+    def rename(self, name: str):
+        self.name = name
+
     @property
     def parent(self) -> 'Corpus':
         return self._parent
