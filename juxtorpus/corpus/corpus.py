@@ -269,6 +269,7 @@ class Corpus(Clonable):
         docs_info.rename(index=mapper, inplace=True)
 
         other_info = pd.Series({
+            'Name': self.name,
             "Corpus Type": self.__class__.__name__,
             "Number of Documents": len(self),
             "Number of Total Words": self.dtm.total,
