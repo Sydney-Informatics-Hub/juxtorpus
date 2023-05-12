@@ -209,6 +209,9 @@ class Corpus(Clonable):
     def custom_dtm(self) -> DTM:
         return self._dtm_registry.get_custom_dtm()
 
+    def freq_table(self) -> pd.Series:
+        return self.dtm.freq_table().series
+
     @property
     def viz(self) -> CorpusViz:
         return self._viz
