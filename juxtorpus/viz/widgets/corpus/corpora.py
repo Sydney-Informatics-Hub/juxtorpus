@@ -12,6 +12,9 @@ import logging
 
 logger = logging.getLogger()
 
+_SHOW_BUILDER_DESCRIPTION = 'Upload a Corpus'
+_HIDE_BUILDER_DESCRIPTION = 'Hide'
+
 
 class CorporaWidget(Widget, ABC):
     """ CorporaWidget
@@ -93,16 +96,16 @@ class CorporaWidget(Widget, ABC):
                     cb.value = cb.description == checked.description
 
     def _toggle_builder_button(self):
-        button = Button(description='I Want To Build a New Corpus',
+        button = Button(description=_SHOW_BUILDER_DESCRIPTION,
                         layout=Layout(width='300px'))
 
         def _on_click_toggle(_):
             if self._builder_appeared():
                 self._widget.children = (self._widget.children[0], self._create_empty(), *self._widget.children[2:])
-                button.description = "I Want To Build a New Corpus"
+                button.description = _SHOW_BUILDER_DESCRIPTION
             else:
                 self._widget.children = (self._widget.children[0], self._builder.widget(), *self._widget.children[2:])
-                button.description = "Hide"
+                button.description = _HIDE_BUILDER_DESCRIPTION
 
         button.on_click(_on_click_toggle)
         return button
