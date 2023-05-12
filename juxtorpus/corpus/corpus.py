@@ -220,7 +220,7 @@ class Corpus(Clonable):
 
     def create_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]]) -> DTM:
         """ Detaches from root corpus and then build a custom dtm. """
-        _ = self.detached()
+        # _ = self.detached()
         return self._update_custom_dtm(tokeniser_func)
 
     def _update_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]]) -> DTM:
@@ -353,8 +353,6 @@ class Corpus(Clonable):
 
         DTM will be regenerated when accessed - hence a different vocab.
         """
-        self._parent = None
-        self._dtm_registry = Corpus.DTMRegistry()
         meta_reg = Corpus.MetaRegistry()
         for k, meta in self.meta.items():
             if isinstance(meta, SeriesMeta):
@@ -362,9 +360,9 @@ class Corpus(Clonable):
                 meta_reg[sm.id] = sm
             else:
                 meta_reg[k] = meta
-        self._meta_registry = meta_reg
-        self._df = self._df.copy().reset_index(drop=True)
-        return self
+        df = self._df.copy().reset_index(drop=True)
+        detached = self.__class__(text=df[self.COL_DOC], metas=meta_reg)
+        return detached
 
     def __len__(self):
         return len(self._df) if self._df is not None else 0
@@ -493,3 +491,7 @@ class SpacyCorpus(Corpus):
 
     def _gen_lemmas_from(self, doc):
         return (doc[start: end].lemma_ for _, start, end in self._is_word_matcher(doc))
+
+    def detached(self) -> 'SpacyCorpus':
+        detached_corpus = super().detached()
+        return self.__class__.from_corpus(detached_corpus, self._nlp, self._source)
