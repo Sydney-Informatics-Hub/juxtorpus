@@ -113,5 +113,5 @@ class SpacyCorpusSlicer(CorpusSlicer, ABC):
         """ Filter by matcher
         If the matcher matches anything, that document is kept in the sliced corpus.
         """
-        op = MatcherOp(self.corpus.docs(), matcher)
-        return self.corpus.cloned(op.mask(self.corpus.docs()))
+        op = MatcherOp(self.corpus, matcher)
+        return self.corpus.cloned(op.mask())
