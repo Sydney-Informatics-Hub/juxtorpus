@@ -228,20 +228,18 @@ class Corpus(Clonable):
 
     def create_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]]) -> DTM:
         """ Detaches from root corpus and then build a custom dtm. """
-        # _ = self.detached()
-        return self._update_custom_dtm(tokeniser_func)
+        self._update_custom_dtm(tokeniser_func)
+        return self._dtm_registry.get_custom_dtm()
 
     def _update_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]]) -> DTM:
         """ Create a custom DTM based on custom tokeniser function. """
+        if not self.is_root:
+            raise ValueError("Your corpus must be root. Try detached().")
         root = self.find_root()
         dtm = DTM()
         dtm.initialise(root.docs(),
                        vectorizer=CountVectorizer(preprocessor=lambda x: x, tokenizer=tokeniser_func))
-
         root._dtm_registry.set_custom_dtm(dtm)
-        if not self.is_root:
-            self._dtm_registry.set_custom_dtm(dtm.cloned(self.docs().index))
-        return self._dtm_registry.get_custom_dtm()
 
     # meta data
     @property
