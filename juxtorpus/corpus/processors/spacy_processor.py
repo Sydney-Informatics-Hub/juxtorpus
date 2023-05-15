@@ -101,7 +101,7 @@ class SpacyProcessor(Processor):
         logger.debug(f"Processing corpus of {len(corpus)} documents...")  # TODO: DH demo changed to debug
         texts = corpus.docs()
         # doc_generator = (doc for doc in tqdm(self.nlp.pipe(texts)))
-        doc_generator = self.nlp.pipe(texts)
+        doc_generator = self.nlp.pipe((t for t in tqdm(texts, total=len(texts))))
         docs = pd.Series(doc_generator, index=texts.index)
         logger.debug("Done.")
         logger.debug(f"Elapsed time: {datetime.now() - start}s.")
