@@ -38,10 +38,7 @@ def generate_name() -> str:
 
 def ensure_docs(docs: pd.Series):
     docs.name = Corpus.COL_DOC  # set default doc name
-    if pd.api.types.is_string_dtype(docs):
-        docs = docs.fillna('')
-    # todo: else ensure spocy docs.
-    return docs
+    return docs.apply(lambda d: str(d) if not isinstance(d, Doc) else d)
 
 
 class Corpus(Clonable):
