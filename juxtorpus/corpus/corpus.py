@@ -38,7 +38,9 @@ def generate_name() -> str:
 
 def ensure_docs(docs: pd.Series):
     docs.name = Corpus.COL_DOC  # set default doc name
-    docs = docs.astype(str)  # handle NA
+    if pd.api.types.is_string_dtype(docs):
+        docs = docs.fillna('')
+    # todo: else ensure spocy docs.
     return docs
 
 
@@ -270,6 +272,7 @@ class Corpus(Clonable):
 
         other_info = pd.Series({
             'Name': self.name,
+            'Parent': self.parent.name,
             "Corpus Type": self.__class__.__name__,
             "Number of Documents": len(self),
             "Number of Total Words": self.dtm.total,
