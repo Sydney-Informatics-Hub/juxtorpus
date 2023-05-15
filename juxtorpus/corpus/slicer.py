@@ -109,9 +109,9 @@ class SpacyCorpusSlicer(CorpusSlicer, ABC):
         if not isinstance(corpus, SpacyCorpus): raise ValueError(f"Must be a SpacyCorpus. Got {type(corpus)}.")
         super(SpacyCorpusSlicer, self).__init__(corpus)
 
-    def filter_by_matcher(self, matcher: Matcher):
+    def filter_by_matcher(self, matcher: Matcher, min_: int = 1, max_: int = None):
         """ Filter by matcher
         If the matcher matches anything, that document is kept in the sliced corpus.
         """
-        op = MatcherOp(self.corpus, matcher)
+        op = MatcherOp(self.corpus, matcher, min_, max_)
         return self.corpus.cloned(op.mask())
