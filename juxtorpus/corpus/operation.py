@@ -120,9 +120,8 @@ class DatetimeOp(Operation):
     def __init__(self, meta: Meta, start: str, end: str, strftime: str = None):
         super().__init__(meta)
         self.strftime = strftime
-        self.start = pd.to_datetime(start, dayfirst=True, format = self.strftime)
-        self.end = pd.to_datetime(end, dayfirst=True, format = self.strftime)
-        
+        self.start = pd.to_datetime(start, dayfirst=True, format=self.strftime)
+        self.end = pd.to_datetime(end, dayfirst=True, format=self.strftime)
 
         if self.start is not None:
             logger.debug(f"{'Converted start datetime'.ljust(25)}: {self.start.strftime('%Yy %mm %dd %H:%M:%S')}")
@@ -158,9 +157,16 @@ class GroupByOp(Operation):
 
 
 class MatcherOp(Operation):
-    def __init__(self, corpus: 'Corpus', matcher: Matcher):
+    def __init__(self, corpus: 'Corpus', matcher: Matcher, min_: int = 1, max_: int = None):
         super().__init__(corpus.docs())
         self.matcher = matcher
+        if min_ is None: min_ = 1
+        self.min_, self.max_ = min_, max_
 
     def condition_func(self, any_) -> bool:
-        return len(self.matcher(any_)) > 0
+        min_, max_ = self.min_, self.max_
+        matched = len(self.matcher(any_))
+        if max_ is not None:
+            return min_ <= matched < max_
+        else:
+            return min_ <= matched
