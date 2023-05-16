@@ -114,4 +114,9 @@ class SpacyCorpusSlicer(CorpusSlicer, ABC):
         If the matcher matches anything, that document is kept in the sliced corpus.
         """
         op = MatcherOp(self.corpus, matcher, min_, max_)
-        return self.corpus.cloned(op.mask())
+        mask = op.mask()
+        cloned = self.corpus.cloned(mask)
+
+        meta_series = pd.Series(op.retrieve_matched())[mask]
+        cloned.add_meta(SeriesMeta('_matched', meta_series))
+        return cloned

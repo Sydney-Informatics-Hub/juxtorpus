@@ -163,10 +163,19 @@ class MatcherOp(Operation):
         if min_ is None: min_ = 1
         self.min_, self.max_ = min_, max_
 
-    def condition_func(self, any_) -> bool:
+        self._matched = []
+
+    def condition_func(self, doc) -> bool:
         min_, max_ = self.min_, self.max_
-        matched = len(self.matcher(any_))
+
+        matched_spans = [doc[s:e].text for _, s, e in self.matcher(doc)]
+        matched_spans_str = ', '.join(matched_spans) if len(matched_spans) > 0 else ''
+        self._matched.append(matched_spans_str)
+        matched = len(matched_spans)
         if max_ is not None:
             return min_ <= matched < max_
         else:
             return min_ <= matched
+
+    def retrieve_matched(self):
+        return self._matched
