@@ -9,6 +9,7 @@ from abc import abstractmethod
 
 import pandas as pd
 from spacy.matcher import Matcher
+from spacy.util import filter_spans
 
 from juxtorpus.corpus.meta import Meta
 from juxtorpus.interfaces import Serialisable
@@ -168,8 +169,9 @@ class MatcherOp(Operation):
     def condition_func(self, doc) -> bool:
         min_, max_ = self.min_, self.max_
 
-        matched_spans = [doc[s:e].text for _, s, e in self.matcher(doc)]
-        matched_spans_str = ', '.join(matched_spans) if len(matched_spans) > 0 else ''
+        matched_spans = [doc[s:e] for _, s, e in self.matcher(doc)]
+        matched_spans = filter_spans(matched_spans)
+        matched_spans_str = ', '.join([span.text for span in matched_spans]) if len(matched_spans) > 0 else ''
         self._matched.append(matched_spans_str)
         matched = len(matched_spans)
         if max_ is not None:
