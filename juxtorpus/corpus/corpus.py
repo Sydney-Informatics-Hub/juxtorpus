@@ -267,7 +267,7 @@ class Corpus(Clonable):
 
         other_info = pd.Series({
             'Name': self.name,
-            'Parent': self.parent.name,
+            'Parent': self.parent.name if self.parent is not None else '',
             "Corpus Type": self.__class__.__name__,
             "Number of Documents": len(self),
             "Number of Total Words": self.dtm.total,
