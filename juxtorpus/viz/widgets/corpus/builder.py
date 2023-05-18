@@ -6,6 +6,8 @@ import math
 
 from juxtorpus.viz import Widget
 from juxtorpus.viz.widgets import FileUploadWidget
+from juxtorpus.corpus import generate_name
+from juxtorpus.viz.style.ipyw import no_horizontal_scroll
 
 f_selector_layout = {'width': '98%', 'height': '100%'}
 f_uploader_layout = {'width': '98%', 'height': '50px'}
@@ -28,28 +30,42 @@ class CorpusBuilderWidget(Widget):
         self.builder = builder
         self._on_build_callback = lambda corpus: None
 
+        self._corpus_name_placeholder = ''
+
     def widget(self):
-        top_labels = [('id', '30%'), ('document', '15%'), ('meta', '15%'), ('data type', '30%')]
+        # left vbox
+        top_labels_config = [('id', '100%'), ('document', '200px'), ('meta', '200px'), ('data type', '200px')]
         top_labels = HBox(
-            list(map(lambda ls: HTML(f"<b>{ls[0]}</b>", layout=Layout(width=ls[1])), top_labels))
+            list(map(lambda ls: HTML(f"<b>{ls[0]}</b>", layout=Layout(width=ls[1])), top_labels_config)),
+            layout=Layout(display='flex')
         )
 
-        checkbox_configs = {col: {'text': False, 'meta': True} for col in self.builder.columns}
+        checkbox_configs = {col: {'text': False, 'meta': True,
+                                  'id_width': top_labels_config[0][1],
+                                  'text_width': top_labels_config[1][1],
+                                  'meta_width': top_labels_config[2][1],
+                                  'dtype_width': top_labels_config[3][1]}
+                            for col in self.builder.columns}
         panel = [top_labels] + [self._create_checkbox(col, config.get('text'), config.get('meta'), config)
                                 for col, config in checkbox_configs.items()]
 
-        key_textbox = Text(description='Name:', placeholder='Corpus Name (randomly generates if not supplied)')
-        corpus_name = dict(name=None)
+        # right vbox
+        self._corpus_name_placeholder = generate_name()
+        key_textbox = Text(description='Name:', placeholder=self._corpus_name_placeholder)
+        key_textbox.layout = Layout(width='250px')
+        key_textbox.style.description_width = '40px'  # just fits 'Name:'
 
         button = Button(description='Build')
-        button_output = Output(layout=Layout(overflow='scroll hidden'))
+        button.layout = Layout(width='150px')
+        button_output = Output(layout=Layout(overflow='scroll hidden', height='20%'))
 
         def _on_click_key_textbox(event):
-            corpus_name.update(name=event.get('new'))
+            self._corpus_name_placeholder = event.get('new')
 
         def _on_click_build_corpus(_):
-            if button.description == 'Done.':
+            if button.description in ('Done', 'Retry'):
                 button.description = 'Build'
+                button.button_style = ''
                 return
             for key, config in checkbox_configs.items():
                 if config.get('text'):
@@ -59,37 +75,52 @@ class CorpusBuilderWidget(Widget):
                         dtype = config.get('dtype')
                         self.builder.add_metas(key, dtypes=dtype)
             button_output.clear_output()
-            
+
             try:
+                button.disabled = True
                 button.description = "Building..."
+                button.button_style = 'info'
                 corpus = self.builder.build()
-                if corpus_name['name']:
-                    corpus.name = corpus_name['name']
+                corpus.name = self._corpus_name_placeholder
                 if self._on_build_callback is not None:
-                    self._on_build_callback(corpus)                
-                button.description = "Done."
+                    self._on_build_callback(corpus)
+                button.description = "Done"
+                button.button_style = 'success'
+                button.disabled = False
             except Exception as e:
                 with button_output: print(f"Failed to build. {e}")
-                button.description = 'Build'
+                button.description = 'Retry'
+                button.button_style = 'warning'
+                button.disabled = False
                 return
 
         key_textbox.observe(_on_click_key_textbox, names='value')
         button.on_click(_on_click_build_corpus)
 
-        return HBox([VBox(panel, layout=Layout(width='70%')),
-                     VBox([key_textbox, button, button_output], layout=Layout(width='30%'))])
+        name_and_build_btn = HBox([key_textbox, button], layout=Layout(**no_horizontal_scroll))
+
+        vertical_pad = Box(layout=Layout(width='100%', height='70%'))
+        horizontal_pad = Box(layout=Layout(width='2%', height='100%'))
+
+        return HBox([VBox(panel, layout=Layout(width='52%')),
+                     horizontal_pad,
+                     VBox([vertical_pad, name_and_build_btn, button_output], layout=Layout(width='48%'))],
+                    layout=Layout(**no_horizontal_scroll))
 
     def _create_checkbox(self, id_: str, text_checked: bool, meta_checked: bool, config: dict):
-        label = Label(f"{id_}", layout=Layout(width='30%'))
-        t_checkbox = Checkbox(value=text_checked, layout=Layout(width='15%'))
-        t_checkbox.style.description_width = '0px'
+        id_width, text_width, = config.get('id_width'), config.get('text_width')
+        meta_width, dtype_width = config.get('meta_width'), config.get('dtype_width')
 
-        m_checkbox = Checkbox(value=meta_checked, layout=Layout(width='15%'))
-        m_checkbox.style.description_width = '0px'
+        label = Label(f"{id_}", layout=Layout(width=id_width))
+        t_checkbox = Checkbox(value=text_checked, layout=Layout(width=text_width))
+        t_checkbox.style.description_width = '5px'
+
+        m_checkbox = Checkbox(value=meta_checked, layout=Layout(width=meta_width))
+        m_checkbox.style.description_width = '5px'
 
         dtypes = sorted([k for k in self.WIDGET_DTYPES_MAP.keys()])
         dtype_dd = Dropdown(options=dtypes, value=dtypes[0], disabled=False,
-                            layout=Layout(width='100px'))
+                            layout=Layout(width=dtype_width))
 
         # dtype_dd.observe
         def _toggle_checkbox(event):
@@ -195,12 +226,29 @@ class CorpusBuilderFileUploadWidget(Widget):
         vbox = VBox([hbox_uploader, Box()])
 
         def on_click_confirm(_):
-            from juxtorpus.corpus import CorpusBuilder
-            selected_files = [d.get('path') for d in self._files.values() if d.get('selected')]
-            if len(selected_files) <= 0: return
-            builder = CorpusBuilder(selected_files)
-            builder.set_callback(self._on_build_callback)
-            vbox.children = (vbox.children[0], builder.widget())
+            if button_confirm.description in ('Done', 'Retry'):
+                button_confirm.disabled = False
+                button_confirm.description = 'Confirm'
+                button_confirm.button_style = ''
+                return
+            try:
+                button_confirm.disabled = True
+                button_confirm.description = 'Loading...'
+                button_confirm.button_style = 'info'
+                from juxtorpus.corpus import CorpusBuilder
+                selected_files = [d.get('path') for d in self._files.values() if d.get('selected')]
+                if len(selected_files) <= 0: return
+                builder = CorpusBuilder(selected_files)
+                builder.set_callback(self._on_build_callback)
+                vbox.children = (vbox.children[0], builder.widget())
+                button_confirm.description = 'Done'
+                button_confirm.button_style = 'success'
+                button_confirm.disabled = False
+            except Exception as e:
+                print(e)
+                button_confirm.description = 'Retry'
+                button_confirm.button_style = 'warning'
+                button_confirm.disabled = False
 
         button_confirm.on_click(on_click_confirm)
         return vbox

@@ -94,8 +94,11 @@ class SeriesMeta(Meta):
 
         return pd.DataFrame.from_dict(info, orient='index').T.fillna('').rename(index={0: self.id})
 
-    def astype(self, type_: Union[str, np.dtype, pd.core.dtypes.dtypes.PandasExtensionDtype]):
-        self._series = self.series.astype(type_)
+    def astype(self, type_: Union[str, np.dtype, pd.core.dtypes.dtypes.PandasExtensionDtype], strftime=None):
+        if type_ == 'datetime':
+            self._series = pd.to_datetime(self.series, format=strftime).dt.tz_localize(None) # NOTE: timezone-UNaware.
+        else:
+            self._series = self.series.astype(type_)
 
     def _show_uniqs(self, series) -> bool:
         uniqs = series.unique()

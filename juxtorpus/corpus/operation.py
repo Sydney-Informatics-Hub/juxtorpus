@@ -9,6 +9,7 @@ from abc import abstractmethod
 
 import pandas as pd
 from spacy.matcher import Matcher
+from spacy.util import filter_spans
 
 from juxtorpus.corpus.meta import Meta
 from juxtorpus.interfaces import Serialisable
@@ -120,9 +121,8 @@ class DatetimeOp(Operation):
     def __init__(self, meta: Meta, start: str, end: str, strftime: str = None):
         super().__init__(meta)
         self.strftime = strftime
-        self.start = pd.to_datetime(start, dayfirst=True, format = self.strftime)
-        self.end = pd.to_datetime(end, dayfirst=True, format = self.strftime)
-        
+        self.start = pd.to_datetime(start, dayfirst=True, format=self.strftime)
+        self.end = pd.to_datetime(end, dayfirst=True, format=self.strftime)
 
         if self.start is not None:
             logger.debug(f"{'Converted start datetime'.ljust(25)}: {self.start.strftime('%Yy %mm %dd %H:%M:%S')}")
@@ -158,9 +158,26 @@ class GroupByOp(Operation):
 
 
 class MatcherOp(Operation):
-    def __init__(self, corpus: 'Corpus', matcher: Matcher):
+    def __init__(self, corpus: 'Corpus', matcher: Matcher, min_: int = 1, max_: int = None):
         super().__init__(corpus.docs())
         self.matcher = matcher
+        if min_ is None: min_ = 1
+        self.min_, self.max_ = min_, max_
 
-    def condition_func(self, any_) -> bool:
-        return len(self.matcher(any_)) > 0
+        self._matched = []
+
+    def condition_func(self, doc) -> bool:
+        min_, max_ = self.min_, self.max_
+
+        matched_spans = [doc[s:e] for _, s, e in self.matcher(doc)]
+        matched_spans = filter_spans(matched_spans)
+        matched_spans_str = ', '.join([span.text for span in matched_spans]) if len(matched_spans) > 0 else ''
+        self._matched.append(matched_spans_str)
+        matched = len(matched_spans)
+        if max_ is not None:
+            return min_ <= matched < max_
+        else:
+            return min_ <= matched
+
+    def retrieve_matched(self):
+        return self._matched

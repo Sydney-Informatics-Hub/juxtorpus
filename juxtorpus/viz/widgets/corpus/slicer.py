@@ -22,7 +22,7 @@ TMASK = 'pd.Series[bool]'
 
 TYPES = ['category', 'datetime', 'whole number', 'decimal', 'text']
 
-STRFORMAT = ' %d %b %Y '
+STRFORMAT = '%d/%b/%Y'
 
 
 class SlicerWidget(Widget, ABC):
@@ -118,6 +118,7 @@ class SlicerWidget(Widget, ABC):
         """ Creates the full dashboard. """
         selector_box = self._selector_box(self._panels_)
         add_operation_btn = self._add_operation_button()
+        add_operation_btn.layout = Layout(width='300px')
         top = HBox([selector_box, self._panel_box_, add_operation_btn],
                    layout=Layout(height='100%', **no_horizontal_scroll))
         bottom = Label()  # placeholder, before Add Operation button is clicked.
@@ -147,7 +148,7 @@ class SlicerWidget(Widget, ABC):
         self._panel_box_.children = (self._panels_.get(selected_meta),)
 
     def _add_operation_button(self) -> Button:
-        button = Button(description='Add Operation', layout=Layout(**no_horizontal_scroll))
+        button = Button(description='Add Operation')
 
         # onclick - Add to ops, refresh bottom panel
         def on_click(event):
@@ -255,6 +256,7 @@ class SlicerWidget(Widget, ABC):
         options = [date_to_slider_option(date) for date in dates]
         index = (int(len(dates) / 4), int(3 * len(dates) / 4))
         slider = SelectionRangeSlider(options=options, index=index, layout={'width': '98%'})
+        slider.style.description_width = '200px'
 
         def update_datetime_datepicker(event):
             sv, ev = widget_s.value, widget_e.value

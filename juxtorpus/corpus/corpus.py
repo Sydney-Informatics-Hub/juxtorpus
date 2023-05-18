@@ -6,6 +6,7 @@ from spacy import Language
 from sklearn.feature_extraction.text import CountVectorizer
 import re
 import coolname
+import numpy as np
 
 from juxtorpus.interfaces.clonable import Clonable
 from juxtorpus.corpus.slicer import CorpusSlicer, SpacyCorpusSlicer
@@ -24,7 +25,8 @@ _ALL_CORPUS_NAMES = set()
 _CORPUS_NAME_SEED = 42
 
 
-def generate_name(corpus: 'Corpus') -> str:
+def generate_name() -> str:
+    global _ALL_CORPUS_NAMES
     # todo: should generate a random name based on corpus words
     # tmp solution - generate a random name.
     while name := coolname.generate_slug(2):
@@ -32,6 +34,11 @@ def generate_name(corpus: 'Corpus') -> str:
             continue
         else:
             return name
+
+
+def ensure_docs(docs: pd.Series):
+    docs.name = Corpus.COL_DOC  # set default doc name
+    return docs.apply(lambda d: str(d) if not isinstance(d, Doc) else d)
 
 
 class Corpus(Clonable):
@@ -132,10 +139,9 @@ class Corpus(Clonable):
         return pd.concat(meta_series, axis=1)
 
     def __init__(self, text: pd.Series, metas: Union[dict[str, Meta], MetaRegistry] = None, name: str = None):
-        self._name = name if name else generate_name(self)
+        self._name = name if name else generate_name()
 
-        text.name = self.COL_DOC
-        self._df: pd.DataFrame = pd.DataFrame(text, columns=[self.COL_DOC])
+        self._df: pd.DataFrame = pd.DataFrame(ensure_docs(text), columns=[self.COL_DOC])
         # ensure initiated object is well constructed.
         assert len(list(filter(lambda x: x == self.COL_DOC, self._df.columns))) <= 1, \
             f"More than 1 {self.COL_DOC} column in dataframe."
@@ -173,6 +179,9 @@ class Corpus(Clonable):
         _ALL_CORPUS_NAMES = _ALL_CORPUS_NAMES.union(name)
         self._name = name
 
+    def rename(self, name: str):
+        self.name = name
+
     @property
     def parent(self) -> 'Corpus':
         return self._parent
@@ -199,6 +208,9 @@ class Corpus(Clonable):
     def custom_dtm(self) -> DTM:
         return self._dtm_registry.get_custom_dtm()
 
+    def freq_table(self) -> pd.Series:
+        return self.dtm.freq_table().series
+
     @property
     def viz(self) -> CorpusViz:
         return self._viz
@@ -213,20 +225,18 @@ class Corpus(Clonable):
 
     def create_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]]) -> DTM:
         """ Detaches from root corpus and then build a custom dtm. """
-        _ = self.detached()
-        return self._update_custom_dtm(tokeniser_func)
+        self._update_custom_dtm(tokeniser_func)
+        return self._dtm_registry.get_custom_dtm()
 
     def _update_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]]) -> DTM:
         """ Create a custom DTM based on custom tokeniser function. """
+        if not self.is_root:
+            raise ValueError("Your corpus must be root. Try detached().")
         root = self.find_root()
         dtm = DTM()
         dtm.initialise(root.docs(),
                        vectorizer=CountVectorizer(preprocessor=lambda x: x, tokenizer=tokeniser_func))
-
         root._dtm_registry.set_custom_dtm(dtm)
-        if not self.is_root:
-            self._dtm_registry.set_custom_dtm(dtm.cloned(self.docs().index))
-        return self._dtm_registry.get_custom_dtm()
 
     # meta data
     @property
@@ -256,6 +266,8 @@ class Corpus(Clonable):
         docs_info.rename(index=mapper, inplace=True)
 
         other_info = pd.Series({
+            'Name': self.name,
+            'Parent': self.parent.name if self.parent is not None else '',
             "Corpus Type": self.__class__.__name__,
             "Number of Documents": len(self),
             "Number of Total Words": self.dtm.total,
@@ -269,7 +281,8 @@ class Corpus(Clonable):
 
     def sample(self, n: int, rand_stat=None) -> 'Corpus':
         """ Uniformly sample from the corpus. """
-        mask = self._df.isna().squeeze()  # Return a mask of all False
+        # mask = self._df.isna().squeeze()  # Return a mask of all False
+        mask = pd.Series(np.zeros(len(self)), dtype=bool, index=self._df.index)
         mask[mask.sample(n=n, random_state=rand_stat).index] = True
         return self.cloned(mask)
 
@@ -345,8 +358,6 @@ class Corpus(Clonable):
 
         DTM will be regenerated when accessed - hence a different vocab.
         """
-        self._parent = None
-        self._dtm_registry = Corpus.DTMRegistry()
         meta_reg = Corpus.MetaRegistry()
         for k, meta in self.meta.items():
             if isinstance(meta, SeriesMeta):
@@ -354,9 +365,9 @@ class Corpus(Clonable):
                 meta_reg[sm.id] = sm
             else:
                 meta_reg[k] = meta
-        self._meta_registry = meta_reg
-        self._df = self._df.copy().reset_index(drop=True)
-        return self
+        df = self._df.copy().reset_index(drop=True)
+        detached = self.__class__(text=df[self.COL_DOC], metas=meta_reg)
+        return detached
 
     def __len__(self):
         return len(self._df) if self._df is not None else 0
@@ -485,3 +496,7 @@ class SpacyCorpus(Corpus):
 
     def _gen_lemmas_from(self, doc):
         return (doc[start: end].lemma_ for _, start, end in self._is_word_matcher(doc))
+
+    def detached(self) -> 'SpacyCorpus':
+        detached_corpus = super().detached()
+        return self.__class__.from_corpus(detached_corpus, self._nlp, self._source)

@@ -7,7 +7,6 @@ import re
 
 from juxtorpus.corpus.meta import *
 from juxtorpus.viz import Widget
-from juxtorpus.viz.widgets.corpus.slicer import SlicerWidget
 from juxtorpus.corpus.operation import *
 import colorlog
 
@@ -100,6 +99,7 @@ class CorpusSlicer(Widget):
         return ((gid, self.corpus.cloned(mask)) for gid, mask in meta.groupby(grouper))
 
     def widget(self):
+        from juxtorpus.viz.widgets.corpus.slicer import SlicerWidget
         return SlicerWidget(self.corpus).widget()
 
 
@@ -109,9 +109,14 @@ class SpacyCorpusSlicer(CorpusSlicer, ABC):
         if not isinstance(corpus, SpacyCorpus): raise ValueError(f"Must be a SpacyCorpus. Got {type(corpus)}.")
         super(SpacyCorpusSlicer, self).__init__(corpus)
 
-    def filter_by_matcher(self, matcher: Matcher):
+    def filter_by_matcher(self, matcher: Matcher, min_: int = 1, max_: int = None):
         """ Filter by matcher
         If the matcher matches anything, that document is kept in the sliced corpus.
         """
-        op = MatcherOp(self.corpus.docs(), matcher)
-        return self.corpus.cloned(op.mask(self.corpus.docs()))
+        op = MatcherOp(self.corpus, matcher, min_, max_)
+        mask = op.mask()
+        cloned = self.corpus.cloned(mask)
+
+        meta_series = pd.Series(op.retrieve_matched())[mask]
+        cloned.add_meta(SeriesMeta('_matched', meta_series))
+        return cloned
