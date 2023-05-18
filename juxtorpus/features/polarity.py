@@ -38,7 +38,7 @@ class Polarity(object):
 
     def __init__(self, jux: 'Jux'):
         self._jux: wr.ref['Jux'] = wr.ref(jux)
-        self.modes = {
+        self.metrics = {
             'tf': self._wordcloud_tf,
             'tfidf': self._wordcloud_tfidf,
             'log_likelihood': self._wordcloud_log_likelihood
@@ -83,11 +83,11 @@ class Polarity(object):
         else:
             return (corpus.dtm for corpus in self._jux().corpora)
 
-    def wordcloud(self, mode: str, top: int = 50, colours=('blue', 'red'), tokeniser_func: Optional[Callable] = None):
+    def wordcloud(self, metric: str, top: int = 50, colours=('blue', 'red'), tokeniser_func: Optional[Callable] = None):
         """ Generate a wordcloud using one of the 3 modes tf, tfidf, log_likelihood. """
-        polarity_wordcloud_func = self.modes.get(mode, None)
+        polarity_wordcloud_func = self.metrics.get(metric, None)
         if polarity_wordcloud_func is None:
-            raise LookupError(f"Mode {mode} does not exist. Choose either {', '.join(self.modes.keys())}")
+            raise LookupError(f"Mode {metric} does not exist. Choose either {', '.join(self.metrics.keys())}")
         assert len(colours) == 2, "There can only be 2 colours. e.g. ('blue', 'red')."
 
         height, width = 24, 24
