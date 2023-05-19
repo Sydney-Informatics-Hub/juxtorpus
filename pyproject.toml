@@ -46,6 +46,7 @@ coolname = "^2.2.0"
 [tool.poetry.dev-dependencies]
 jupyterlab = "^3.6"
 jupyterlab-vim = "^0.15"
+jupyterlab-git = "^0.41.0"
 
 
 [build-system]
