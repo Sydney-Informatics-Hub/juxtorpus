@@ -90,6 +90,7 @@ class CorporaWidget(Widget, ABC):
             self._widget.children = (*self._widget.children[:3],)
 
     def _toggle_checkboxes(self, checked: Checkbox):
+        if checked is None: return
         for hboxes in self._selector.children:
             for cb in hboxes.children:
                 if isinstance(cb, Checkbox):
