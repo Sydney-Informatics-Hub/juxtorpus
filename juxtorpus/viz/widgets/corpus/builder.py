@@ -89,6 +89,8 @@ class CorpusBuilderWidget(Widget):
                 button.disabled = False
             except Exception as e:
                 with button_output: print(f"Failed to build. {e}")
+                import traceback
+                traceback.print_exc()
                 button.description = 'Retry'
                 button.button_style = 'warning'
                 button.disabled = False
