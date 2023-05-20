@@ -30,7 +30,7 @@ sklearn CountVectorizer
 
 TVectorizer = TypeVar('TVectorizer', bound=CountVectorizer)
 
-DEFAULT_COUNTVEC_TOKENISER_PATTERN = r'(?u)\b\w+\b'  # includes single letter words like 'a'
+DEFAULT_COUNTVEC_TOKENISER_PATTERN = r'(?u)\b\w{3,}\b'  # includes single letter words like 'a'
 
 
 class DTM(Clonable):
