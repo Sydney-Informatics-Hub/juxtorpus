@@ -42,6 +42,7 @@ class CorporaWidget(Widget, ABC):
                             layout=Layout(grid_template_columns='repeat(2, 1fr)'))
 
     def widget(self) -> GridBox:
+        self._refresh_corpus_selector()
         return self._widget
 
     def _corpus_selector(self, selected: Optional[str] = None) -> VBox:
