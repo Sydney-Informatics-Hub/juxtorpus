@@ -9,8 +9,8 @@ class CorpusViz(object):
     def __init__(self, corpus):
         self._corpus = wr.ref(corpus)
 
-    def wordcloud(self, metric: str = 'tf', max_words: int = 50, word_type: str = 'word'):
-        return wordcloud(self._corpus(), metric=metric, max_words=max_words, word_type=word_type)
+    def wordcloud(self, metric: str = 'tf', max_words: int = 50, word_type: str = 'word', stopwords: list[str] = []):
+        return wordcloud(self._corpus(), metric=metric, max_words=max_words, word_type=word_type, stopwords=stopwords)
 
     def timeline(self, datetime_meta: str, freq: str):
         return timeline(self._corpus(), datetime_meta=datetime_meta, freq=freq)
@@ -20,9 +20,9 @@ class CorporaViz(object):
     def __init__(self, corpora):
         self._corpora = wr.ref(corpora)
 
-    def wordclouds(self, names: list[str], metric: str = 'tf', max_words: int = 50, word_type: str = 'word'):
+    def wordclouds(self, names: list[str], metric: str = 'tf', max_words: int = 50, word_type: str = 'word', stopwords: list[str] = [] ):
         return wordclouds(corpora=self._corpora(), names=names,
-                          metric=metric, max_words=max_words, word_type=word_type)
+                          metric=metric, max_words=max_words, word_type=word_type, stopwords=stopwords)
 
     def timelines(self, names: list[str], datetime_meta: str, freq: str):
         return timelines(corpora=self._corpora(), names=names,

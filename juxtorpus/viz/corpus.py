@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import math
 
 
-def wordclouds(corpora, names: list[str], max_words: int = 50, metric: str = 'tf', word_type: str = 'word'):
+def wordclouds(corpora, names: list[str], max_words: int = 50, metric: str = 'tf', word_type: str = 'word', stopwords: list[str] = []):
     MAX_COLS = 2
     nrows = math.ceil(len(names) / 2)
     fig, axes = plt.subplots(nrows=nrows, ncols=MAX_COLS, figsize=(16, 16 * 1.5))
@@ -17,7 +17,7 @@ def wordclouds(corpora, names: list[str], max_words: int = 50, metric: str = 'tf
     for name in names:
         assert corpora[name], f"{name} does not exist in Corpora."
         corpus = corpora[name]
-        wc = _wordcloud(corpus, max_words, metric, word_type)
+        wc = _wordcloud(corpus, max_words, metric, word_type, stopwords)
         if nrows == 1:
             ax = axes[c]
         else:
@@ -31,8 +31,8 @@ def wordclouds(corpora, names: list[str], max_words: int = 50, metric: str = 'tf
     plt.show()
 
 
-def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 'word'):
-    wc = _wordcloud(corpus, max_words, metric, word_type)
+def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 'word', stopwords: list[str] = []):
+    wc = _wordcloud(corpus, max_words, metric, word_type, stopwords)
     h, w = 12, 12 * 1.5
     plt.figure(figsize=(h, w))
     plt.imshow(wc, interpolation='bilinear')
@@ -41,12 +41,13 @@ def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 
     plt.show()
 
 
-def _wordcloud(corpus, max_words: int, metric: str, word_type: str, stopwords=ENGLISH_STOP_WORDS):
+def _wordcloud(corpus, max_words: int, metric: str, word_type: str, stopwords: list[str] = []):
+    stopwords.extend(ENGLISH_STOP_WORDS)
     word_types = {'word', 'hashtag', 'mention'}
     metrics = {'tf', 'tfidf'}
     assert word_type in word_types, f"{word_type} not in {', '.join(word_types)}"
     assert metric in metrics, f"{metric} not in {', '.join(metrics)}"
-    wc = WordCloud(background_color='white', max_words=max_words, height=600, width=1200)
+    wc = WordCloud(background_color='white', max_words=max_words, height=600, width=1200, stopwords=stopwords)
     if word_type == 'word':
         # generator = corpus.generate_words()
         dtm = corpus.dtm
