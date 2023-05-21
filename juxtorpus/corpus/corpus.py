@@ -10,7 +10,7 @@ import numpy as np
 
 from juxtorpus.interfaces.clonable import Clonable
 from juxtorpus.corpus.slicer import CorpusSlicer, SpacyCorpusSlicer
-from juxtorpus.corpus.meta import Meta, SeriesMeta
+from juxtorpus.corpus.meta import Meta, SeriesMeta, DocMeta
 from juxtorpus.corpus.dtm import DTM
 from juxtorpus.corpus.viz import CorpusViz
 from juxtorpus.matchers import is_word, is_word_tweets, is_hashtag, is_mention
@@ -500,3 +500,12 @@ class SpacyCorpus(Corpus):
     def detached(self) -> 'SpacyCorpus':
         detached_corpus = super().detached()
         return self.__class__.from_corpus(detached_corpus, self._nlp, self._source)
+
+    def to_dataframe(self):
+        to_concats = [super().to_dataframe()]
+        for meta_id, meta in self.meta.items():
+            if isinstance(meta, DocMeta):
+                to_concat = self.docs().apply(lambda doc: meta._get_doc_attr(doc))
+                to_concat.name = meta_id
+                to_concats.append(to_concat)
+        return pd.concat(to_concats, axis=1)
