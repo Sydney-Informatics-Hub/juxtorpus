@@ -83,7 +83,8 @@ class Polarity(object):
         else:
             return (corpus.dtm for corpus in self._jux().corpora)
 
-    def wordcloud(self, metric: str, top: int = 50, colours=('blue', 'red'), stopwords: list[str]=[], tokeniser_func: Optional[Callable] = None):
+    def wordcloud(self, metric: str, top: int = 50, colours=('blue', 'red'), stopwords: list[str] = None,
+                  tokeniser_func: Optional[Callable] = None):
         """ Generate a wordcloud using one of the 3 modes tf, tfidf, log_likelihood. """
         polarity_wordcloud_func = self.metrics.get(metric, None)
         if polarity_wordcloud_func is None:
@@ -104,9 +105,9 @@ class Polarity(object):
         ax.axis('off')
         plt.show()
 
-    def _wordcloud_tf(self, top: int, colours: tuple[str], tokeniser_func, stopwords: list[str]=[]):
+    def _wordcloud_tf(self, top: int, colours: tuple[str], tokeniser_func, stopwords: list[str] = None):
         assert len(colours) == 2, "Only supports 2 colours."
-        
+        if stopwords is None: stopwords = list()
         sw = stopwords
         sw.extend(ENGLISH_STOP_WORDS)
 
@@ -125,15 +126,15 @@ class Polarity(object):
                       Patch(facecolor='None', label='Translucent: Similar frequency'), ]
         return pwc, add_legend
 
-    def _wordcloud_tfidf(self, top: int, colours: tuple[str], tokeniser_func, stopwords: list[str]=[]):
+    def _wordcloud_tfidf(self, top: int, colours: tuple[str], tokeniser_func, stopwords: list[str] = None):
         assert len(colours) == 2, "Only supports 2 colours."
-
+        if stopwords is None: stopwords = list()
         sw = stopwords
         sw.extend(ENGLISH_STOP_WORDS)
 
         df = self.tfidf(tokeniser_func)
         df['size'] = df.polarity.abs()
-        df = df[~df.index.isin(sw)]        
+        df = df[~df.index.isin(sw)]
         df_tmp = df.sort_values(by='size', ascending=False).iloc[:top]
         pwc = PolarityWordCloud(df_tmp, col_polarity='polarity', col_size='size')
         pwc.gradate(colours[0], colours[1])
@@ -143,8 +144,9 @@ class Polarity(object):
                       Patch(facecolor='None', label='Translucent: Similar tfidf')]
         return pwc, add_legend
 
-    def _wordcloud_log_likelihood(self, top: int, colours: tuple[str], tokeniser_func, stopwords: list[str]=[]):
+    def _wordcloud_log_likelihood(self, top: int, colours: tuple[str], tokeniser_func, stopwords: list[str] = None):
         assert len(colours) == 2, "Only supports 2 colours."
+        if stopwords is None: stopwords = list()
         sw = stopwords
         sw.extend(ENGLISH_STOP_WORDS)
 

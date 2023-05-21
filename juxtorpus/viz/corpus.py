@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import math
 
 
-def wordclouds(corpora, names: list[str], max_words: int = 50, metric: str = 'tf', word_type: str = 'word', stopwords: list[str] = []):
+def wordclouds(corpora, names: list[str], max_words: int = 50, metric: str = 'tf', word_type: str = 'word', stopwords: list[str] = None):
     MAX_COLS = 2
     nrows = math.ceil(len(names) / 2)
     fig, axes = plt.subplots(nrows=nrows, ncols=MAX_COLS, figsize=(16, 16 * 1.5))
@@ -31,7 +31,7 @@ def wordclouds(corpora, names: list[str], max_words: int = 50, metric: str = 'tf
     plt.show()
 
 
-def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 'word', stopwords: list[str] = []):
+def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 'word', stopwords: list[str] = None):
     wc = _wordcloud(corpus, max_words, metric, word_type, stopwords)
     h, w = 12, 12 * 1.5
     plt.figure(figsize=(h, w))
@@ -41,7 +41,8 @@ def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 
     plt.show()
 
 
-def _wordcloud(corpus, max_words: int, metric: str, word_type: str, stopwords: list[str] = []):
+def _wordcloud(corpus, max_words: int, metric: str, word_type: str, stopwords: list[str] = None):
+    if stopwords is None: stopwords = list()
     stopwords.extend(ENGLISH_STOP_WORDS)
     word_types = {'word', 'hashtag', 'mention'}
     metrics = {'tf', 'tfidf'}
