@@ -182,8 +182,10 @@ class SlicerWidget(Widget, ABC):
         """ Create all the slicing panels. """
         panels = dict()
         for meta_id, meta in self.corpus.meta.items():
+            # if not isinstance(meta, SeriesMeta):
+            #     raise NotImplementedError(f"SliceWidget currently only supports {SeriesMeta.__class__.__name__}.")
             if not isinstance(meta, SeriesMeta):
-                raise NotImplementedError(f"SliceWidget currently only supports {SeriesMeta.__class__.__name__}.")
+                continue
 
             dtype = meta.dtype
             if dtype == 'category':

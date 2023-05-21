@@ -57,7 +57,7 @@ from juxtorpus.corpus.processors.components import Component
 from juxtorpus.corpus.processors.components.hashtags import HashtagComponent
 from juxtorpus.corpus.processors.components.mentions import MentionsComp
 from juxtorpus.corpus.processors.components.sentiment import SentimentComp
-from juxtorpus.corpus.meta import DocMeta
+from juxtorpus.corpus.meta import DocMeta, SeriesMeta
 
 import colorlog
 
@@ -138,6 +138,12 @@ class SpacyProcessor(Processor):
             docs = corpus.docs()
             meta = DocMeta(id_=id_, attr=attr, nlp=self.nlp, docs=docs)
             corpus.add_meta(meta)
+
+            if attr == 'polarity':
+                sentiment = corpus.docs().apply(lambda doc: doc._.polarity)
+                corpus.add_meta(SeriesMeta(id_='sentiment', series=sentiment))
+
+
 
     def _create_episode(self) -> ProcessEpisode:
         return ProcessEpisode(
