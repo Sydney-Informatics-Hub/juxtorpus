@@ -33,6 +33,7 @@ def generate_name() -> str:
         if name in _ALL_CORPUS_NAMES:
             continue
         else:
+            _ALL_CORPUS_NAMES.add(name)
             return name
 
 
@@ -176,7 +177,7 @@ class Corpus(Clonable):
             new_name = name + '_'
             logger.info(f"{name} already exists. It renamed to {new_name}")
             name = new_name
-        _ALL_CORPUS_NAMES = _ALL_CORPUS_NAMES.union(name)
+        _ALL_CORPUS_NAMES.add(name)
         self._name = name
 
     def rename(self, name: str):
