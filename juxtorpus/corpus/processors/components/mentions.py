@@ -8,9 +8,8 @@ from juxtorpus.corpus.processors.components import Component
 class MentionsComp(Component):
     def __init__(self, nlp: Language, name: str, attr: str):
         super(MentionsComp, self).__init__(nlp, name, attr)
-        if Doc.has_extension(self._attr):
-            raise KeyError(f"{self._attr} already exists. {MentionsComp.__name__} will not function properly.")
-        Doc.set_extension(self._attr, default=[])
+        if not Doc.has_extension(self._attr):
+            Doc.set_extension(self._attr, default=[])
 
         self.matcher = is_mention(nlp.vocab)
 
