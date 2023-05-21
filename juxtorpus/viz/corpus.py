@@ -75,18 +75,21 @@ def _wordcloud(corpus, max_words: int, metric: str, word_type: str, stopwords: l
         raise ValueError(f"Metric {metric} is not supported. Must be one of {', '.join(metrics)}")
 
 
-def timeline(corpus, datetime_meta: str, freq: str):
-    meta = corpus.meta.get_or_raise_err(datetime_meta)
-    assert pd.api.types.is_datetime64_any_dtype(meta.series), f"{meta.id} is not a datetime meta."
-    df = pd.DataFrame([False] * len(meta.series), index=meta.series)
-    df = df.groupby(pd.Grouper(level=0, freq=freq)).count()
+def timeline(corpus, datetime_meta: str, freq: str, meta_name: str = ''):
+    time_meta = corpus.meta.get_or_raise_err(datetime_meta)
+    assert pd.api.types.is_datetime64_any_dtype(time_meta.series), f"{time_meta.id} is not a datetime meta."
+    if meta_name:
+        s = pd.Series(corpus.meta.get_or_raise_err(meta_name).series.tolist(), index=time_meta.series)
+    else:
+        s = pd.Series(time_meta.series.index, index=time_meta.series)
+    s = s.groupby(pd.Grouper(level=0, freq=freq)).nunique(dropna=True)
     fig = go.Figure()
     fig.add_trace(
-        go.Scatter(x=df.index.tolist(), y=df[0].tolist(), name=meta.id, showlegend=True)
+        go.Scatter(x=s.index.tolist(), y=s.tolist(), name=time_meta.id, showlegend=True)
     )
 
     freq_to_label = {'w': 'Week', 'm': 'Month', 'y': 'Year', 'd': 'Day'}
-    key = freq.strip()[-1]
+    key = freq.strip()[-1].lower()
 
     title = f"Count by {freq_to_label.get(key, key)}"
     xaxis_title, yaxis_title = f"{freq_to_label.get(key, key)}", "Count"
@@ -94,7 +97,7 @@ def timeline(corpus, datetime_meta: str, freq: str):
     return fig
 
 
-def timelines(corpora, names: list[str], datetime_meta: str, freq: str):
+def timelines(corpora, names: list[str], datetime_meta: str, freq: str, meta_name: str = ''):
     # datetime_series = None
     for name in names:
         corpus = corpora[name]
@@ -103,15 +106,18 @@ def timelines(corpora, names: list[str], datetime_meta: str, freq: str):
         # if not datetime_series: datetime_series = meta.series
     fig = go.Figure()
     for name in names:
-        corpus = corpora[name]
-        meta = corpus.meta.get_or_raise_err(datetime_meta)
-        df = pd.DataFrame([False] * len(meta.series), index=meta.series)
-        df = df.groupby(pd.Grouper(level=0, freq=freq)).count()
+        time_meta = corpora[name].meta.get_or_raise_err(datetime_meta)
+        if meta_name:
+            s = pd.Series(corpora[name].meta.get_or_raise_err(meta_name).series.tolist(), index=time_meta.series)
+        else:
+            s = pd.Series(time_meta.series.index, index=time_meta.series)
+        s = s.groupby(pd.Grouper(level=0, freq=freq)).nunique(dropna=True)
         fig.add_trace(
-            go.Scatter(x=df.index.tolist(), y=df[0].tolist(), name=name, showlegend=True)
+            go.Scatter(x=s.index.tolist(), y=s.tolist(), name=name, showlegend=True)
         )
+
     freq_to_label = {'w': 'Week', 'm': 'Month', 'y': 'Year', 'd': 'Day'}
-    key = freq.strip()[-1]
+    key = freq.strip()[-1].lower()
 
     title = f"Count by {freq_to_label.get(key, key)}"
     xaxis_title, yaxis_title = f"{freq_to_label.get(key, key)}", "Count"
