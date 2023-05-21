@@ -124,7 +124,7 @@ class SpacyProcessor(Processor):
         doc_attr: str
         for doc_attr in doc_attrs:
             id_ = doc_attr.replace('doc', '')
-            attr = id_.split('.')[-1] if id_.startswith('_.') else id_
+            attr = id_.split('.')[-1] if id_.startswith('._.') else id_[1:]
             # docs = corpus._df.loc[:, corpus.COL_DOC]
             docs = corpus.docs()
             meta = DocMeta(id_=id_, attr=attr, nlp=self.nlp, docs=docs)
