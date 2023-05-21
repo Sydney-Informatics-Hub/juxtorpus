@@ -181,6 +181,7 @@ class Corpus(Clonable):
         self._name = name
 
     def rename(self, name: str):
+        _ALL_CORPUS_NAMES.remove(self.name)
         self.name = name
 
     @property
