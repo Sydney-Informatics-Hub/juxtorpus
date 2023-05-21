@@ -12,8 +12,8 @@ class CorpusViz(object):
     def wordcloud(self, metric: str = 'tf', max_words: int = 50, word_type: str = 'word', stopwords: list[str] = None):
         return wordcloud(self._corpus(), metric=metric, max_words=max_words, word_type=word_type, stopwords=stopwords)
 
-    def timeline(self, datetime_meta: str, freq: str, meta_name: str = ''):
-        return timeline(self._corpus(), datetime_meta=datetime_meta, freq=freq, meta_name=meta_name)
+    def timeline(self, datetime_meta: str, freq: str, meta_names: list[str] = None):
+        return timeline(self._corpus(), datetime_meta=datetime_meta, freq=freq, meta_names=meta_names)
 
 
 class CorporaViz(object):

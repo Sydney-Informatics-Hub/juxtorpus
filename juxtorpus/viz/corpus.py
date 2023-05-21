@@ -75,19 +75,24 @@ def _wordcloud(corpus, max_words: int, metric: str, word_type: str, stopwords: l
         raise ValueError(f"Metric {metric} is not supported. Must be one of {', '.join(metrics)}")
 
 
-def timeline(corpus, datetime_meta: str, freq: str, meta_name: str = ''):
+def timeline(corpus, datetime_meta: str, freq: str, meta_names: list[str] = None):
     time_meta = corpus.meta.get_or_raise_err(datetime_meta)
+    if meta_names == None:
+        meta_names = ['']
+    if isinstance(meta_name, str):
+        meta_name = [meta_name]
     assert pd.api.types.is_datetime64_any_dtype(time_meta.series), f"{time_meta.id} is not a datetime meta."
-    if meta_name:
-        s = pd.Series(corpus.meta.get_or_raise_err(meta_name).series.tolist(), index=time_meta.series)
-    else:
-        s = pd.Series(time_meta.series.index, index=time_meta.series)
-    s = s.groupby(pd.Grouper(level=0, freq=freq)).nunique(dropna=True)
     fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(x=s.index.tolist(), y=s.tolist(), name=time_meta.id, showlegend=True)
-    )
-
+    for meta_name in meta_names:
+        if meta_name:
+            s = pd.Series(corpus.meta.get_or_raise_err(meta_name).series.tolist(), index=time_meta.series)
+        else:
+            s = pd.Series(time_meta.series.index, index=time_meta.series)
+        s = s.groupby(pd.Grouper(level=0, freq=freq)).nunique(dropna=True)
+    
+        fig.add_trace(
+            go.Scatter(x=s.index.tolist(), y=s.tolist(), name=meta_name, showlegend=True)
+        )
     freq_to_label = {'w': 'Week', 'm': 'Month', 'y': 'Year', 'd': 'Day'}
     key = freq.strip()[-1].lower()
 
