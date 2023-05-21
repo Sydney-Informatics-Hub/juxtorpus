@@ -11,7 +11,7 @@ import pandas as pd
 import spacy
 from IPython.display import display
 from textacy.extract import keyword_in_context
-from juxtorpus.corpus import Corpus
+from juxtorpus.corpus import Corpus, SpacyCorpus
 
 
 SEARCH_CSS_TEMPLATE = """
@@ -211,6 +211,8 @@ class ConcordanceLoader:
         elif self.type == "corpus":
             if not isinstance(self.df_input, Corpus): raise ValueError()
             df = self.df_input.to_dataframe().rename({self.df_input.COL_DOC: 'text'}, axis=1).reset_index()
+            if isinstance(self.df_input, SpacyCorpus):
+                df['text'] = df['text'].apply(lambda d: d.text)
             return self.chunk_a_dataframe(df)
 
 
