@@ -2178,6 +2178,32 @@ extra = ["lxml (>=4.6)", "pydot (>=1.4.2)", "pygraphviz (>=1.10)", "sympy (>=1.1
 test = ["codecov (>=2.1)", "pytest (>=7.2)", "pytest-cov (>=4.0)"]
 
 [[package]]
+name = "nltk"
+version = "3.8.1"
+description = "Natural Language Toolkit"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "nltk-3.8.1-py3-none-any.whl", hash = "sha256:fd5c9109f976fa86bcadba8f91e47f5e9293bd034474752e92a520f81c93dda5"},
+    {file = "nltk-3.8.1.zip", hash = "sha256:1834da3d0682cba4f2cede2f9aad6b0fafb6461ba451db0efb6f9c39798d64d3"},
+]
+
+[package.dependencies]
+click = "*"
+joblib = "*"
+regex = ">=2021.8.3"
+tqdm = "*"
+
+[package.extras]
+all = ["matplotlib", "numpy", "pyparsing", "python-crfsuite", "requests", "scikit-learn", "scipy", "twython"]
+corenlp = ["requests"]
+machine-learning = ["numpy", "python-crfsuite", "scikit-learn", "scipy"]
+plot = ["matplotlib"]
+tgrep = ["pyparsing"]
+twitter = ["twython"]
+
+[[package]]
 name = "notebook"
 version = "6.5.4"
 description = "A web-based notebook environment for interactive computing"
@@ -3731,6 +3757,22 @@ files = [
 ]
 
 [[package]]
+name = "spacytextblob"
+version = "4.0.0"
+description = "A TextBlob sentiment analysis pipeline component for spaCy."
+category = "main"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "spacytextblob-4.0.0-py3-none-any.whl", hash = "sha256:d81927fddd42f56821e20464c1c732a5bfc426854a12fa14300520f7bb13e3c3"},
+    {file = "spacytextblob-4.0.0.tar.gz", hash = "sha256:00fed254bc7e8492375825c04c999c60a9edf9c0bca0c12a261fa7e0fb43f8a5"},
+]
+
+[package.dependencies]
+spacy = ">=3.0,<4.0"
+textblob = ">=0.15.3,<0.16.0"
+
+[[package]]
 name = "srsly"
 version = "2.4.6"
 description = "Modern high-performance serialization utilities for Python"
@@ -3841,6 +3883,21 @@ tornado = ">=6.1.0"
 [package.extras]
 docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
 test = ["pre-commit", "pytest (>=7.0)", "pytest-timeout"]
+
+[[package]]
+name = "textblob"
+version = "0.15.3"
+description = "Simple, Pythonic text processing. Sentiment analysis, part-of-speech tagging, noun phrase parsing, and more."
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "textblob-0.15.3-py2.py3-none-any.whl", hash = "sha256:b0eafd8b129c9b196c8128056caed891d64b7fa20ba570e1fcde438f4f7dd312"},
+    {file = "textblob-0.15.3.tar.gz", hash = "sha256:7ff3c00cb5a85a30132ee6768b8c68cb2b9d76432fec18cd1b3ffe2f8594ec8c"},
+]
+
+[package.dependencies]
+nltk = ">=3.1"
 
 [[package]]
 name = "thinc"
@@ -4602,4 +4659,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.11"
-content-hash = "03429741364a4c50cfb1f22a984277afaae793e503928a118c02ba70ae2389a9"
+content-hash = "dda0b39308d4ce073a1b9acb8f34e7f73d2d2072c5cd925eed8501ed11d0c7d2"
