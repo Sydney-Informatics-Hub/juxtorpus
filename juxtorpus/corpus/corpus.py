@@ -501,11 +501,11 @@ class SpacyCorpus(Corpus):
         detached_corpus = super().detached()
         return self.__class__.from_corpus(detached_corpus, self._nlp, self._source)
 
-    def to_dataframe(self):
-        to_concats = [super().to_dataframe()]
-        for meta_id, meta in self.meta.items():
-            if isinstance(meta, DocMeta):
-                to_concat = self.docs().apply(lambda doc: meta._get_doc_attr(doc))
-                to_concat.name = meta_id
-                to_concats.append(to_concat)
-        return pd.concat(to_concats, axis=1)
+    # def to_dataframe(self):
+    #     to_concats = [super().to_dataframe()]
+    #     for meta_id, meta in self.meta.items():
+    #         if isinstance(meta, DocMeta):
+    #             to_concat = self.docs().apply(lambda doc: meta._get_doc_attr(doc))
+    #             to_concat.name = meta_id
+    #             to_concats.append(to_concat)
+    #     return pd.concat(to_concats, axis=1)
