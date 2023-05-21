@@ -210,7 +210,7 @@ class ConcordanceLoader:
             return self.chunk_a_dataframe(df)
         elif self.type == "corpus":
             if not isinstance(self.df_input, Corpus): raise ValueError()
-            df = self.df_input.to_dataframe().rename({self.df_input.COL_DOC: 'text'}, axis=1)
+            df = self.df_input.to_dataframe().rename({self.df_input.COL_DOC: 'text'}, axis=1).reset_index()
             return self.chunk_a_dataframe(df)
 
 
