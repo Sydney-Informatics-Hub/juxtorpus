@@ -46,6 +46,7 @@ Notes:
 """
 
 from spacy import Language
+from spacy.tokens import Doc
 from datetime import datetime
 import pandas as pd
 from tqdm.auto import tqdm
@@ -63,17 +64,17 @@ import colorlog
 logger = colorlog.getLogger(__name__)
 
 
-@Language.factory("extract_hashtags")
+@Language.factory("extract_hashtags", assigns=['doc._.hashtags'])
 def create_hashtag_component(nlp: Language, name: str):
     return HashtagComponent(nlp, name, attr='hashtags')
 
 
-@Language.factory("extract_mentions")
+@Language.factory("extract_mentions", assigns=['doc._.mentions'])
 def create_mention_component(nlp: Language, name: str):
     return MentionsComp(nlp, name, attr='mentions')
 
 
-@Language.factory("extract_sentiments")
+@Language.factory("extract_sentiments", assigns=['doc._.sentiment'])
 def create_sentiment(nlp: Language, name: str):
     return SentimentComp(nlp, name, attr='sentiment')
 
@@ -116,12 +117,27 @@ class SpacyProcessor(Processor):
 
         Note: attribute name can come from custom extensions OR spacy built in. see built_in_component_attrs.
         """
-        for name, comp in self.nlp.pipeline:
-            _attr = comp.attr if isinstance(comp, Component) else self.built_in_component_attrs.get(name, None)
-            if _attr is None: continue
-            generator = corpus._df.loc[:, corpus.COL_DOC]
-            meta = DocMeta(id_=name, attr=_attr, nlp=self.nlp, docs=generator)
-            corpus._meta_registry[meta.id] = meta
+        pipe_analysis = self.nlp.analyze_pipes()
+        all_attrs = pipe_analysis.get('attrs').keys()
+        doc_attrs = (attr for attr in all_attrs if attr.lower().startswith('doc.'))
+
+        doc_attr: str
+        for doc_attr in doc_attrs:
+            id_ = doc_attr.replace('doc', '')
+            attr = id_.split('.')[-1] if id_.startswith('_.') else id_
+            # docs = corpus._df.loc[:, corpus.COL_DOC]
+            docs = corpus.docs()
+            meta = DocMeta(id_=id_, attr=attr, nlp=self.nlp, docs=docs)
+            corpus.add_meta(meta=meta)
+
+        # ensure all user keys are assigned even with the arg: assign is not used.
+        doc: Doc = corpus[0]
+        for dunder_str, attr, _, _ in doc.user_data.keys():
+            id_ = dunder_str + attr
+            if corpus.meta.get(id_, False): continue
+            docs = corpus.docs()
+            meta = DocMeta(id_=id_, attr=attr, nlp=self.nlp, docs=docs)
+            corpus.add_meta(meta)
 
     def _create_episode(self) -> ProcessEpisode:
         return ProcessEpisode(
