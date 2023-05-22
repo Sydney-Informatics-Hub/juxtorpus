@@ -230,12 +230,26 @@ class Corpus(Clonable):
             parent = parent._parent
         return parent
 
-    def create_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]], inplace: bool = True) -> DTM:
-        """ Create a custom DTM based on custom tokeniser fn
-        :arg tokeniser_func - callable that receives the document as argument.
-        :arg inplace - replace the existing custom dtm for this corpus.
+    def create_custom_dtm(self,
+                          tokeniser_func: Callable[[TDoc], list[str]],
+                          preprocessor_func: Callable[[TDoc], TDoc] = None,
+                          inplace: bool = True,
+                          **kwargs) -> DTM:
+        """ Create a custom DTM based on a user defined tokeniser function.
+
+        :arg tokeniser_func - callable that receives the document as argument and must return a list of strs.
+        :arg preprocessor_func - callable that receives the document as argument and must return the document.
+        :arg inplace - replace the existing custom dtm for this corpus. (default=True)
+        :arg kwargs - all other arguments you can pass to CountVectorizer https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
         """
-        vectoriser = CountVectorizer(preprocessor=lambda x: x, tokeniser_func=tokeniser_func)
+        if not callable(tokeniser_func): raise ValueError(f"{tokeniser_func} must be a callable.")
+        if preprocessor_func is None: preprocessor_func = lambda _: _
+        if not callable(preprocessor_func): raise ValueError(f"{preprocessor_func} must be a callable.")
+
+        vectoriser = CountVectorizer(tokenizer=tokeniser_func,
+                                     preprocessor=preprocessor_func,
+                                     analyzer='word',  # must be 'word' to use tokenizer arg
+                                     **kwargs)
         cdtm = DTM()
         cdtm.initialise(self.docs(), vectorizer=vectoriser)
         if inplace:
