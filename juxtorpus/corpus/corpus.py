@@ -178,10 +178,15 @@ class Corpus(Clonable):
             logger.info(f"{name} already exists. It renamed to {new_name}")
             name = new_name
         _ALL_CORPUS_NAMES.add(name)
+
+        if self.name is not None:
+            try:
+                _ALL_CORPUS_NAMES.remove(self.name)
+            except KeyError:
+                logger.debug(f'Failed to remove {self.name} from global corpus name cache.')
         self._name = name
 
     def rename(self, name: str):
-        _ALL_CORPUS_NAMES.remove(self.name)
         self.name = name
 
     @property
