@@ -56,7 +56,6 @@ from juxtorpus.corpus.processors import Processor, ProcessEpisode
 from juxtorpus.corpus.processors.components import Component
 from juxtorpus.corpus.processors.components.hashtags import HashtagComponent
 from juxtorpus.corpus.processors.components.mentions import MentionsComp
-from juxtorpus.corpus.processors.components.sentiment import SentimentComp
 from juxtorpus.corpus.meta import DocMeta, SeriesMeta
 
 import colorlog
@@ -73,10 +72,14 @@ def create_hashtag_component(nlp: Language, name: str):
 def create_mention_component(nlp: Language, name: str):
     return MentionsComp(nlp, name, attr='mentions')
 
+""" Archived: see components.sentiment.py
+
+from juxtorpus.corpus.processors.components.sentiment import SentimentComp
 
 @Language.factory("extract_sentiments", assigns=['doc._.sentiment'])
 def create_sentiment(nlp: Language, name: str):
     return SentimentComp(nlp, name, attr='sentiment')
+"""
 
 
 class SpacyProcessor(Processor):

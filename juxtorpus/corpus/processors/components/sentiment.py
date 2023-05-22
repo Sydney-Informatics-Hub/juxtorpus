@@ -2,6 +2,8 @@
 
 https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest
 """
+""" Archived: removed transformers and torch dependencies to lighten Docker image size.
+
 from spacy.tokens import Doc
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer, AutoConfig
@@ -78,3 +80,4 @@ if __name__ == '__main__':
     sentiment = Sentiment()
     sentiments = sentiment.score(text)
     print(sentiments)
+"""
