@@ -63,6 +63,36 @@ class ItemTimeline(Widget):
     TRACE_DATUM = namedtuple('TRACE_DATUM', ['item', 'datetimes', 'metrics', 'colour', 'texts'])
 
     @classmethod
+    def from_corpus(cls, corpus: Corpus, datetime_meta_key: str = None, freq: str = '1w', use_custom_dtm: bool = False):
+        keys = {'datetime': datetime_meta_key}
+        if datetime_meta_key is None:
+            for k, meta in corpus.meta.items():
+                if type(meta) != SeriesMeta: continue
+                if pd.api.types.is_datetime64_any_dtype(meta.series):
+                    keys['datetime'] = k
+                    break
+            if not keys.get('datetime'): raise LookupError(f"No meta found with datetime dtype. {corpus.meta.keys()}")
+        datetime_meta_key = keys.get('datetime')
+        return cls.from_corpus_groups(corpus.slicer.group_by(datetime_meta_key, pd.Grouper(freq=freq)), use_custom_dtm)
+
+    @classmethod
+    def from_corpus_groups(cls, groups, use_custom_dtm: bool = False):
+        """ Constructss ItemTimeline from corpus groups.
+        :arg use_custom_dtm - use the cached custom dtm instead of default.
+        """
+        groups = list(groups)
+        datetimes = []
+        for dt, _ in groups:
+            if type(dt) != pd.Timestamp: raise TypeError("Did you groupby a meta that is of type datetime?")
+            datetimes.append(dt)
+
+        if not use_custom_dtm:
+            fts = [c.dtm.freq_table() for _, c in groups]
+        else:
+            fts = [c.custom_dtm.freq_table() for _, c in groups]
+        return cls.from_freqtables(datetimes, fts)
+
+    @classmethod
     def from_freqtables(cls, datetimes: Union[pd.Series, list], freqtables: list[FreqTable]):
         """ Constructs ItemTimeline using the specified freqtables.
         :arg datetimes - list of datetimes for each freqtable (converted using pd.to_datetime)
@@ -74,36 +104,6 @@ class ItemTimeline(Widget):
         fts_df.reset_index(drop=True)
         fts_df.set_index(datetimes, inplace=True)
         return cls(df=fts_df)
-
-    @classmethod
-    def from_corpus(cls, corpus: Corpus, datetime_meta_key: str = None, freq: str = '1w', custom_dtm: bool = False):
-        keys = {'datetime': datetime_meta_key}
-        if datetime_meta_key is None:
-            for k, meta in corpus.meta.items():
-                if type(meta) != SeriesMeta: continue
-                if pd.api.types.is_datetime64_any_dtype(meta.series):
-                    keys['datetime'] = k
-                    break
-            if not keys.get('datetime'): raise LookupError(f"No meta found with datetime dtype. {corpus.meta.keys()}")
-        datetime_meta_key = keys.get('datetime')
-        return cls.from_corpus_groups(corpus.slicer.group_by(datetime_meta_key, pd.Grouper(freq=freq)), custom_dtm)
-
-    @classmethod
-    def from_corpus_groups(cls, groups, custom_dtm: bool = False):
-        """ Constructss ItemTimeline from corpus groups.
-        :arg custom_dtm - use the cached custom dtm instead of default.
-        """
-        groups = list(groups)
-        datetimes = []
-        for dt, _ in groups:
-            if type(dt) != pd.Timestamp: raise TypeError("Did you groupby a meta that is of type datetime?")
-            datetimes.append(dt)
-
-        if not custom_dtm:
-            fts = [c.dtm.freq_table() for _, c in groups]
-        else:
-            fts = [c.custom_dtm.freq_table() for _, c in groups]
-        return cls.from_freqtables(datetimes, fts)
 
     def __init__(self, df: pd.DataFrame):
         """ Initialise with a dataframe with a datetime index, item columns and values as metrics. """
