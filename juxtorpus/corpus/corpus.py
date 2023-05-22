@@ -33,7 +33,6 @@ def generate_name() -> str:
         if name in _ALL_CORPUS_NAMES:
             continue
         else:
-            _ALL_CORPUS_NAMES.add(name)
             return name
 
 
