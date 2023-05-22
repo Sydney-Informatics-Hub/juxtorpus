@@ -140,7 +140,8 @@ class Corpus(Clonable):
         return pd.concat(meta_series, axis=1)
 
     def __init__(self, text: pd.Series, metas: Union[dict[str, Meta], MetaRegistry] = None, name: str = None):
-        self._name = name if name else generate_name()
+        self._name = None
+        self.name = name if name else generate_name()
 
         self._df: pd.DataFrame = pd.DataFrame(ensure_docs(text), columns=[self.COL_DOC])
         # ensure initiated object is well constructed.
@@ -315,7 +316,7 @@ class Corpus(Clonable):
                 yield word
 
     def _gen_words_from(self, doc) -> Generator[str, None, None]:
-        return (token.lower() for token in self._pattern_words.findall(doc))
+        return (token for token in self._pattern_words.findall(doc))
 
     def generate_hashtags(self) -> Generator[str, None, None]:
         for doc in self.docs():
@@ -488,10 +489,10 @@ class SpacyCorpus(Corpus):
         return df
 
     def _gen_words_from(self, doc: Doc):
-        return (doc[start: end].text.lower() for _, start, end in self._is_word_matcher(doc))
+        return (doc[start: end].text for _, start, end in self._is_word_matcher(doc))
 
     def _gen_hashtags_from(self, doc: Doc):
-        return (doc[start: end].text.lower() for _, start, end in self._is_hashtag_matcher(doc))
+        return (doc[start: end].text for _, start, end in self._is_hashtag_matcher(doc))
 
     def _gen_mentions_from(self, doc: Doc):
         return (doc[start: end].text.lower() for _, start, end in self._is_mention_matcher(doc))
