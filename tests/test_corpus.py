@@ -195,6 +195,7 @@ class TestCorpus(unittest.TestCase):
             mask, _ = random_mask(subcorpus)
             subcorpus = subcorpus.cloned(mask)
             existing_names.add(subcorpus.name)
+            assert subcorpus.name not in existing_names, f"{subcorpus.name} already exist. Corpus names must be unique."
 
     # 3. ensure number of names generated equals number of corpus.
     def test_Given_X_When_X_corpus_is_created_Then_X_names_exist(self):
