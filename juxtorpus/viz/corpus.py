@@ -7,9 +7,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.graph_objects as go
 import math
+from typing import Callable
 
 
-def wordclouds(corpora, names: list[str], max_words: int = 50, metric: str = 'tf', word_type: str = 'word', stopwords: list[str] = None):
+def wordclouds(corpora, names: list[str],
+               max_words: int = 50,
+               metric: str = 'tf',
+               word_type: str = 'word',
+               stopwords: list[str] = None,
+               lower: bool = True):
     MAX_COLS = 2
     nrows = math.ceil(len(names) / 2)
     fig, axes = plt.subplots(nrows=nrows, ncols=MAX_COLS, figsize=(16, 16 * 1.5))
@@ -17,7 +23,12 @@ def wordclouds(corpora, names: list[str], max_words: int = 50, metric: str = 'tf
     for name in names:
         assert corpora[name], f"{name} does not exist in Corpora."
         corpus = corpora[name]
-        wc = _wordcloud(corpus, max_words, metric, word_type, stopwords)
+        wc = _wordcloud(corpus,
+                        max_words=max_words,
+                        metric=metric,
+                        word_type=word_type,
+                        stopwords=stopwords,
+                        lower=lower)
         if nrows == 1:
             ax = axes[c]
         else:
@@ -31,8 +42,9 @@ def wordclouds(corpora, names: list[str], max_words: int = 50, metric: str = 'tf
     plt.show()
 
 
-def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 'word', stopwords: list[str] = None):
-    wc = _wordcloud(corpus, max_words, metric, word_type, stopwords)
+def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 'word',
+              stopwords: list[str] = None, lower: bool = True):
+    wc = _wordcloud(corpus, max_words, metric, word_type, stopwords, lower)
     h, w = 12, 12 * 1.5
     plt.figure(figsize=(h, w))
     plt.imshow(wc, interpolation='bilinear')
@@ -41,7 +53,7 @@ def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 
     plt.show()
 
 
-def _wordcloud(corpus, max_words: int, metric: str, word_type: str, stopwords: list[str] = None):
+def _wordcloud(corpus, max_words: int, metric: str, word_type: str, stopwords: list[str] = None, lower: bool = True):
     if stopwords is None: stopwords = list()
     stopwords.extend(ENGLISH_STOP_WORDS)
     word_types = {'word', 'hashtag', 'mention'}
@@ -49,12 +61,23 @@ def _wordcloud(corpus, max_words: int, metric: str, word_type: str, stopwords: l
     assert word_type in word_types, f"{word_type} not in {', '.join(word_types)}"
     assert metric in metrics, f"{metric} not in {', '.join(metrics)}"
     wc = WordCloud(background_color='white', max_words=max_words, height=600, width=1200, stopwords=stopwords)
+
+    def lower_wrapper(gen) -> Callable:
+        def generate_lowered(doc):
+            return (str(x).lower() for x in gen(doc))
+
+        return generate_lowered
+
     if word_type == 'word':
-        dtm = corpus.dtm
+        dtm = corpus.dtm  # corpus dtm is always lower cased.
     elif word_type == 'hashtag':
-        dtm = corpus.create_custom_dtm(corpus._gen_hashtags_from, inplace=False)
+        gen = corpus._gen_hashtags_from
+        if lower: gen = lower_wrapper(gen)
+        dtm = corpus.create_custom_dtm(tokeniser_func=gen, inplace=False)
     elif word_type == 'mention':
-        dtm = corpus.create_custom_dtm(corpus._gen_mentions_from, inplace=False)
+        gen = corpus._gen_mentions_from
+        if lower: gen = lower_wrapper(gen)
+        dtm = corpus.create_custom_dtm(tokeniser_func=gen, inplace=False)
     else:
         raise ValueError(f"Word type {word_type} is not supported. Must be one of {', '.join(word_types)}")
 
@@ -86,7 +109,7 @@ def timeline(corpus, datetime_meta: str, freq: str, meta_name: list[str] = None)
         else:
             s = pd.Series(time_meta.series.index, index=time_meta.series)
         s = s.groupby(pd.Grouper(level=0, freq=freq)).nunique(dropna=True)
-    
+
         fig.add_trace(
             go.Scatter(x=s.index.tolist(), y=s.tolist(), name=name, showlegend=True)
         )
