@@ -175,3 +175,39 @@ class TestCorpus(unittest.TestCase):
         docs: list[str] = subcorpus[start:stop]
         assert len(docs) == (9 - 4), \
             f"getitem returned the wrong number of documents. Expected: {9 - 4}. Got: {len(docs)}"
+
+    # Corpus name must be unique.
+    # 1. create two corpus with the same name with __init__
+    def test_Given_two_corpus_When_init_with_same_name_Then_one_is_amended(self):
+        SHARED_NAME = 'shared_name'
+        corpus = Corpus.from_dataframe(pd.DataFrame(['a'], columns=['t']), col_doc='t', name=SHARED_NAME)
+        corpus2 = Corpus.from_dataframe(pd.DataFrame(['a'], columns=['t']), col_doc='t', name=SHARED_NAME)
+
+        assert corpus.name != corpus2.name, "Corpus names must be unique."
+
+    # 2. create a corpus and then clone it.
+    def test_Given_corpus_When_cloned_Then_new_name_is_given(self):
+        corpus = Corpus.from_dataframe(pd.DataFrame(['a'] * 100, columns=['t']), col_doc='t', name='root')
+
+        existing_names = {corpus.name, }
+        subcorpus = corpus
+        for i in range(10):
+            mask, _ = random_mask(subcorpus)
+            subcorpus = subcorpus.cloned(mask)
+            existing_names.add(subcorpus.name)
+
+    # 3. ensure number of names generated equals number of corpus.
+    def test_Given_X_When_X_corpus_is_created_Then_X_names_exist(self):
+        from juxtorpus.corpus.corpus import _ALL_CORPUS_NAMES
+        SHARED_NAME = 'shared_name'
+        corpus = Corpus.from_dataframe(pd.DataFrame(['a'] * 1000, columns=['t']), col_doc='t', name=SHARED_NAME)
+        corpus2 = Corpus.from_dataframe(pd.DataFrame(['a'], columns=['t']), col_doc='t', name=SHARED_NAME)
+        subcorpus = corpus
+        for i in range(10):
+            mask, _ = random_mask(subcorpus)
+            subcorpus = subcorpus.cloned(mask)
+
+        NUM_CORPUS_IN_SETUP_FN = 1
+        NUM_CORPUS_IN_THIS_FN = 2 + 10
+        assert len(_ALL_CORPUS_NAMES) == NUM_CORPUS_IN_SETUP_FN + NUM_CORPUS_IN_THIS_FN, \
+            "Number of unique names created should equal the number of corpus created."
