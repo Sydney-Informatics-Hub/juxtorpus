@@ -173,7 +173,7 @@ class Corpus(Clonable):
     @name.setter
     def name(self, name):
         global _ALL_CORPUS_NAMES
-        if name in _ALL_CORPUS_NAMES:
+        while name in _ALL_CORPUS_NAMES:
             new_name = name + '_'
             logger.info(f"{name} already exists. It renamed to {new_name}")
             name = new_name
