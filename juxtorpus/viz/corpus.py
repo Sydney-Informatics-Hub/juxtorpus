@@ -50,14 +50,11 @@ def _wordcloud(corpus, max_words: int, metric: str, word_type: str, stopwords: l
     assert metric in metrics, f"{metric} not in {', '.join(metrics)}"
     wc = WordCloud(background_color='white', max_words=max_words, height=600, width=1200, stopwords=stopwords)
     if word_type == 'word':
-        # generator = corpus.generate_words()
         dtm = corpus.dtm
     elif word_type == 'hashtag':
-        # generator = corpus.generate_hashtags()
-        dtm = corpus.create_custom_dtm(corpus._gen_hashtags_from)
+        dtm = corpus.create_custom_dtm(corpus._gen_hashtags_from, inplace=False)
     elif word_type == 'mention':
-        # generator = corpus.generate_mentions()
-        dtm = corpus.create_custom_dtm(corpus._gen_mentions_from)
+        dtm = corpus.create_custom_dtm(corpus._gen_mentions_from, inplace=False)
     else:
         raise ValueError(f"Word type {word_type} is not supported. Must be one of {', '.join(word_types)}")
 

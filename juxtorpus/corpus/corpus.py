@@ -230,20 +230,22 @@ class Corpus(Clonable):
             parent = parent._parent
         return parent
 
-    def create_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]]) -> DTM:
-        """ Detaches from root corpus and then build a custom dtm. """
-        self._update_custom_dtm(tokeniser_func)
-        return self._dtm_registry.get_custom_dtm()
+    def create_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]], inplace: bool = True) -> DTM:
+        """ Create a custom DTM based on custom tokeniser fn
+        :arg tokeniser_func - callable that receives the document as argument.
+        :arg inplace - replace the existing custom dtm for this corpus.
+        """
+        vectoriser = CountVectorizer(preprocessor=lambda x: x, tokeniser_func=tokeniser_func)
+        cdtm = DTM()
+        cdtm.initialise(self.docs(), vectorizer=vectoriser)
+        if inplace:
+            self._dtm_registry.set_custom_dtm(dtm=cdtm)
+            return self._dtm_registry.get_custom_dtm()
+        else:
+            return cdtm
 
-    def _update_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]]) -> DTM:
-        """ Create a custom DTM based on custom tokeniser function. """
-        if not self.is_root:
-            raise ValueError("Your corpus must be root. Try detached().")
-        root = self.find_root()
-        dtm = DTM()
-        dtm.initialise(root.docs(),
-                       vectorizer=CountVectorizer(preprocessor=lambda x: x, tokenizer=tokeniser_func))
-        root._dtm_registry.set_custom_dtm(dtm)
+    def clear_custom_dtm(self):
+        self._dtm_registry.set_custom_dtm(None)
 
     # meta data
     @property

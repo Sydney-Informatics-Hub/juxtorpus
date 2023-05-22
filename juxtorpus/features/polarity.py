@@ -79,7 +79,7 @@ class Polarity(object):
     def _selected_dtms(self, tokeniser_func: Optional) -> Generator[DTM, None, None]:
         """ Return a generator DTMs given a tokeniser function."""
         if tokeniser_func:
-            return (corpus.create_custom_dtm(tokeniser_func) for corpus in self._jux().corpora)
+            return (corpus.create_custom_dtm(tokeniser_func, inplace=False) for corpus in self._jux().corpora)
         else:
             return (corpus.dtm for corpus in self._jux().corpora)
 
