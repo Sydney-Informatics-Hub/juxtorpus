@@ -44,9 +44,9 @@ class TestCorpus(unittest.TestCase):
         orig_num_uniqs = self.corpus.dtm.shape[1]
         assert orig_num_uniqs == clone.dtm.shape[1], "Precondition not met for downstream assertion."
 
-        clone.detached()
-        assert clone.is_root, "Clone is detached. It should be root."
-        assert clone.dtm.shape[1] != orig_num_uniqs
+        detached = clone.detached()
+        assert detached.is_root, "Clone is detached. It should be root."
+        assert detached.dtm.shape[1] != orig_num_uniqs
 
     def test_Given_corpus_When_cloned_Then_subcorpus_size_equals_mask(self):
         """ Basic check of the cloned corpus. Texts, DTM and meta keys."""
@@ -90,18 +90,6 @@ class TestCorpus(unittest.TestCase):
         for cloned_idx in cloned_indices:
             original_idx = texts.index[cloned_idx]
             assert is_equal(self.corpus.dtm.matrix[original_idx, :], cloned_again.dtm.matrix[cloned_idx, :])
-
-    def test_Given_clone_When_create_custom_dtm_Then_clone_is_detached(self):
-        """ Creating custom dtm should automatically detach from root, update its custom dtm and return custom dtm.
-
-        Note: This is used a convenience method for users and behaviour may change in the future.
-        """
-        mask, _ = random_mask(self.corpus)
-        clone = self.corpus.cloned(mask)
-
-        cdtm = clone.create_custom_dtm(lambda text: re.findall(r'#\w+', text))  # function doesn't matter
-        assert clone.is_root, "Creating custom dtm should automatically detach from root corpus."
-        assert cdtm is clone.custom_dtm, "Custom dtm was not updated to the detached subcorpus."
 
     def test_Given_corpus_When_cloned_Then_cloned_custom_dtm_is_valid(self):
         mask, _ = random_mask(self.corpus)
@@ -194,8 +182,8 @@ class TestCorpus(unittest.TestCase):
         for i in range(10):
             mask, _ = random_mask(subcorpus)
             subcorpus = subcorpus.cloned(mask)
-            existing_names.add(subcorpus.name)
             assert subcorpus.name not in existing_names, f"{subcorpus.name} already exist. Corpus names must be unique."
+            existing_names.add(subcorpus.name)
 
     # 3. ensure number of names generated equals number of corpus.
     def test_Given_X_When_X_corpus_is_created_Then_X_names_exist(self):
