@@ -75,6 +75,7 @@ class Corpus(Clonable):
         def __init__(self, *args, **kwargs):
             super(Corpus.DTMRegistry, self).__init__(*args, **kwargs)
             self.set_tokens_dtm(DTM())
+            self._corpus_to_custom_dtm_index_map = None
 
         def __setitem__(self, key, value):
             if not isinstance(value, DTM):
@@ -87,11 +88,29 @@ class Corpus(Clonable):
         def get_tokens_dtm(self) -> DTM:
             return self.get('tokens')
 
-        def set_custom_dtm(self, dtm):
+        def set_custom_dtm(self, dtm, current_corpus_index: pd.Index):
             self['custom'] = dtm
+            # current corpus's index and custom dtm index will be mismatched when created from a child corpus.
+            self._corpus_to_custom_dtm_index_map = self._build_custom_dtm_index_mapper(
+                current_corpus_index=current_corpus_index,
+                num_docs_in_dtm=dtm.num_docs
+            )
+
+        @staticmethod
+        def _build_custom_dtm_index_mapper(current_corpus_index, num_docs_in_dtm: int):
+            if not len(current_corpus_index) == num_docs_in_dtm:
+                raise ArithmeticError(f"Corpus size and dtm size must match. "
+                                      f"Got corpus={len(current_corpus_index)} dtm={num_docs_in_dtm}")
+            mapping = zip(current_corpus_index, range(num_docs_in_dtm))
+            return dict(mapping)
 
         def get_custom_dtm(self) -> DTM:
             return self.get('custom', None)
+
+        def to_custom_dtm_index(self, index: pd.Index) -> pd.Index:
+            if self._corpus_to_custom_dtm_index_map is None:
+                raise ValueError("Did you set a custom dtm?")
+            return pd.Index([self._corpus_to_custom_dtm_index_map[idx] for idx in index])
 
     class MetaRegistry(dict):
         def __init__(self, *args, **kwargs):
@@ -254,7 +273,7 @@ class Corpus(Clonable):
         cdtm = DTM()
         cdtm.initialise(self.docs(), vectorizer=vectoriser)
         if inplace:
-            self._dtm_registry.set_custom_dtm(dtm=cdtm)
+            self._dtm_registry.set_custom_dtm(dtm=cdtm, current_corpus_index=self._df.index)
             return self._dtm_registry.get_custom_dtm()
         else:
             return cdtm
@@ -374,7 +393,8 @@ class Corpus(Clonable):
         registry = Corpus.DTMRegistry()
         registry.set_tokens_dtm(self._dtm_registry.get_tokens_dtm().cloned(mask))
         if self._dtm_registry.get_custom_dtm() is not None:
-            registry.set_custom_dtm(self._dtm_registry.get_custom_dtm().cloned(mask))
+            custom_dtm_mask = pd.Series(mask.values, index=self._dtm_registry.to_custom_dtm_index(mask.index))
+            registry.set_custom_dtm(self._dtm_registry.get_custom_dtm().cloned(custom_dtm_mask), mask[mask].index)
         return registry
 
     def detached(self) -> 'Corpus':
