@@ -242,7 +242,8 @@ class Corpus(Clonable):
         :arg inplace - replace the existing custom dtm for this corpus. (default=True)
         :arg kwargs - all other arguments you can pass to CountVectorizer https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
         """
-        if not callable(tokeniser_func): raise ValueError(f"{tokeniser_func} must be a callable.")
+        if tokeniser_func is not None and not callable(tokeniser_func):
+            raise ValueError(f"{tokeniser_func} must be a callable.")
         if preprocessor_func is None: preprocessor_func = lambda _: _
         if not callable(preprocessor_func): raise ValueError(f"{preprocessor_func} must be a callable.")
 
