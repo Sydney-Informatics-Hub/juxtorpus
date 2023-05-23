@@ -45,7 +45,8 @@ class SentimentResults(Viz):
         self._corpus.add_meta(meta)
 
     def render(self):
-        print("Renders the sentiment analysis result.")
+        self.sentiments.hist(bins=25)
+        #print("Renders the sentiment analysis result.")
         # note: this requires the documents (corpus) and its sentiments.
 
 
