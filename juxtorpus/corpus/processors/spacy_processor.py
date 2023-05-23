@@ -110,7 +110,7 @@ class SpacyProcessor(Processor):
         logger.debug("Done.")
         logger.debug(f"Elapsed time: {datetime.now() - start}s.")
 
-        scorpus = SpacyCorpus(docs, corpus.meta, self.nlp, self._source, corpus.name)
+        scorpus = SpacyCorpus(docs, corpus.meta, self.nlp, self._source, corpus.name + '[spacy]')
         scorpus._dtm_registry = corpus._dtm_registry
         scorpus._parent = corpus.parent
         return scorpus
