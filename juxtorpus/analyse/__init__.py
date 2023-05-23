@@ -3,10 +3,12 @@ from juxtorpus.corpus import Corpus
 # todo: import the analyse functions from each submodule.
 from .topic_model import analyse_with_lda
 from .sentiment import analyse_with_sentiment
+from .quotation import analyse_with_quotation
 
 _methods = {
     'topic_model': analyse_with_lda,
-    'sentiment': analyse_with_sentiment
+    'sentiment': analyse_with_sentiment,
+    'quotation': analyse_with_quotation
 }
 
 
