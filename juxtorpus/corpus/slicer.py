@@ -56,7 +56,10 @@ class CorpusSlicer(Widget):
         :arg regex - the regex pattern
         :arg ignore_case - whether to ignore case
         """
-        meta = self.corpus.meta.get_or_raise_err(id_)
+        if id_ == self.corpus.COL_DOC:
+            meta = self.corpus.docs()
+        else:
+            meta = self.corpus.meta.get_or_raise_err(id_)
         op = RegexOp(meta, regex, ignore_case)
         return self.corpus.cloned(op.mask())
 

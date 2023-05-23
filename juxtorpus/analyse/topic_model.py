@@ -23,6 +23,15 @@ from juxtorpus.viz import Widget
 from juxtorpus.corpus.meta import SeriesMeta
 
 
+def analyse_with_lda(corpus: Corpus, num_topics: int, mode: str,
+                     add_results: bool, results_prefix: str = 'lda'):
+    if not isinstance(num_topics, int): raise TypeError(f"num_topics must be an integer.")
+    lda = LDA(corpus=corpus, num_topics=num_topics)
+    lda.build(mode=mode)
+    if add_results: lda.add_results_to_corpus(prefix=results_prefix)
+    return lda
+
+
 class LDA(Widget):
 
     def __init__(self, corpus: Corpus, num_topics: int):
@@ -37,7 +46,7 @@ class LDA(Widget):
         return self._model
 
     def build(self, mode: str):
-        assert mode in {'tf', 'tfidf'}, "Only supports mode tf or tfidf."
+        if mode not in {'tf', 'tfidf'}: raise ValueError("Only supports mode tf or tfidf.")
         if mode == 'tf':
             with self._corpus().dtm.without_terms(terms=ENGLISH_STOP_WORDS) as dtm_nosw:
                 self._topics = self._model.fit_transform(dtm_nosw.matrix)
@@ -56,17 +65,17 @@ class LDA(Widget):
         pyLDAvis.enable_notebook()
         return prepare(**self._pyldavis_args)
 
-    def add_results_to_corpus(self):
+    def add_results_to_corpus(self, prefix: str):
         if not self._is_built: raise ValueError(ERR_NOT_BUILT)
-        df = self._get_topics_dataframe()
+        df = self._get_topics_dataframe(prefix=prefix)
         for col in df.columns:
             id_ = col
             meta = SeriesMeta(id_=id_, series=df[col])
             self._corpus().update_meta(meta)
 
-    def _get_topics_dataframe(self):
+    def _get_topics_dataframe(self, prefix: str):
         return pd.DataFrame(_row_norm(self._topics),
-                            columns=[f"#lda_topic_{i + 1}" for i in range(self._topics.shape[1])])
+                            columns=[f"{prefix}_{i + 1}" for i in range(self._topics.shape[1])])
 
     def _get_best_topic_series(self):
         return pd.Series(self._topics.argmax(axis=1))

@@ -90,11 +90,11 @@ class RangeOp(Operation):
         min_, max_ = self.min_, self.max_
         if min_ is None and max_ is None: return True
         if None not in (min_, max_):
-            return min_ <= any_ < max_
+            return min_ <= any_ <= max_
         elif min_ is not None:
             return min_ <= any_
         else:
-            return any_ < max_
+            return any_ <= max_
 
     def __str__(self):
         s = super().__str__()
