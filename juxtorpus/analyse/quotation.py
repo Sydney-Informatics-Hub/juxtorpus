@@ -4,7 +4,7 @@ from juxtorpus.corpus import Corpus
 
 
 def analyse_with_quotation(corpus: Corpus, doc_id: str,
-                           add_results: bool=False, results_suffix='_quotation',
+                           add_results: bool=False, results_prefix='quotation_',
                            entities: list[str] = None):
     # note: add_results is unused here. Maybe used in the future.
     if entities is None:
@@ -23,4 +23,4 @@ def analyse_with_quotation(corpus: Corpus, doc_id: str,
 
     quotes_df.merge(corpus_meta, how='left', on='text_name')
 
-    return Corpus.from_dataframe(quotes_df, col_doc='quote', name=corpus.name + results_suffix), qt
+    return Corpus.from_dataframe(quotes_df, col_doc='quote', name=corpus.name + results_prefix), qt
