@@ -12,7 +12,7 @@ _methods = {
 }
 
 
-def analyse(corpus: Corpus, method: str, add_results: bool, **kwargs):
+def analyse(corpus: Corpus, method: str, add_results: bool = False, **kwargs):
     func = _methods.get(method, None)
     if func is None: raise ValueError(f"{method} is not one of {','.join(_methods.keys())}")
 
