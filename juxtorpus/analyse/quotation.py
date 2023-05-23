@@ -21,6 +21,6 @@ def analyse_with_quotation(corpus: Corpus, doc_id: str,
     meta_cols = corpus._meta_registry.keys()
     corpus_meta = corpus.to_dataframe().loc[:, meta_cols]
 
-    quotes_df.merge(corpus_meta, how='left', on='text_name')
+    quotes_df = quotes_df.merge(corpus_meta, how='left', on='text_name')
 
     return Corpus.from_dataframe(quotes_df, col_doc='quote', name=results_prefix + corpus.name), qt
