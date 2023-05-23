@@ -24,7 +24,7 @@ from juxtorpus.corpus.meta import SeriesMeta
 
 
 def analyse_with_lda(corpus: Corpus, num_topics: int, mode: str,
-                     add_results: bool, results_prefix: str = 'lda'):
+                     add_results: bool=True, results_prefix: str = 'TM_'):
     if not isinstance(num_topics, int): raise TypeError(f"num_topics must be an integer.")
     lda = LDA(corpus=corpus, num_topics=num_topics)
     lda.build(mode=mode)
