@@ -19,8 +19,8 @@ def analyse_with_quotation(corpus: Corpus, doc_id: str,
     quotes_df['quote_type'] = quotes_df['quote_type'].astype('category')
 
     meta_cols = corpus._meta_registry.keys()
-    corpus_meta = corpus.to_dataframe().loc[meta_cols]
+    corpus_meta = corpus.to_dataframe().loc[:, meta_cols]
 
     quotes_df.merge(corpus_meta, how='left', on='text_name')
 
-    return Corpus.from_dataframe(quotes_df, col_doc='quote', name=corpus.name + results_prefix), qt
+    return Corpus.from_dataframe(quotes_df, col_doc='quote', name=results_prefix + corpus.name), qt
