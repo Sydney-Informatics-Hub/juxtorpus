@@ -7,7 +7,7 @@ import spacy
 
 
 class TestPymusas(TestCase):
-    def test_pymusas_with_python_39(self):
+    def test_Given_python_39_When_spacy_pymusas_pipeline_Then_processable(self):
         assert re.match(r'3\.9\.*', sys.version.split()[0]) is not None, "Expecting python version 3.9.x"
         try:
             # We exclude the following components as we do not need them.
