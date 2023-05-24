@@ -45,7 +45,8 @@ def wordclouds(corpora, names: list[str],
 def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 'word',
               stopwords: list[str] = None, lower: bool = True):
     wc = _wordcloud(corpus, max_words, metric, word_type, stopwords, lower)
-    h, w = 12, 12 * 1.5
+    # h, w = 12, 12 * 1.5
+    h, w = 6, 10
     plt.figure(figsize=(h, w))
     plt.imshow(wc, interpolation='bilinear')
     plt.axis('off')
