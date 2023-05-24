@@ -138,7 +138,7 @@ class PolarityWordCloud(Viz):
     def render(self, height: int = 16, width: int = 16 * 1.5, title: str = ''):
         """ Renders the wordcloud on the screen. """
         self._build(resolution_scale=int(height * width * 0.01))  # 0.01 was determined after multiple trials.
-        fig, ax = plt.subplots(figsize=(height, width))
+        fig, ax = plt.subplots(figsize=(height/2, width/2))
         ax.imshow(self.wc, interpolation='bilinear')
         ax.axis('off')
         plt.show()
