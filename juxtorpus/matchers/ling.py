@@ -23,3 +23,9 @@ def noun(compound: bool = False, adj: bool = False):
         return {**COMPOUND_ADJ, **NOUN}
     else:
         return NOUN
+
+
+# Pymusas Tags: https://ucrel.github.io/pymusas/ , https://ucrel.lancs.ac.uk/usas/usas_guide.pdf
+def pymusas_tag() -> dict:
+    """ Generate a spacy matcher pattern for pymusas tags based on arguments. """
+    return dict()  # todo: design the arguments, e.g. > 1 tag, top level tag - maybe use enums.
