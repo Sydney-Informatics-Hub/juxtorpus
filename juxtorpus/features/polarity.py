@@ -104,7 +104,7 @@ class Polarity(object):
         legend_elements.extend(add_legend)
 
         ax.imshow(pwc.wc, interpolation='bilinear')
-        ax.legend(handles=legend_elements, prop={'size': 12}, loc='bottom left', bbox_to_anchor=(1, 0.5))
+        ax.legend(handles=legend_elements, prop={'size': 12}, loc='lower left', bbox_to_anchor=(1, 0.5))
         ax.axis('off')
         plt.tight_layout()  # Adjust the layout to prevent overlapping
         plt.show()
