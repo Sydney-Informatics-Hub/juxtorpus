@@ -4,11 +4,13 @@ from juxtorpus.corpus import Corpus
 from .topic_model import analyse_with_lda
 from .sentiment import analyse_with_sentiment
 from .quotation import analyse_with_quotation
+from .sem_tagger import analyse_with_sem_tagger
 
 _methods = {
     'topic_model': analyse_with_lda,
     'sentiment': analyse_with_sentiment,
-    'quotation': analyse_with_quotation
+    'quotation': analyse_with_quotation,
+    'semantic_tagger': analyse_with_sem_tagger
 }
 
 _results_prefix = {
