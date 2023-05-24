@@ -7,6 +7,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 import re
 import coolname
 import numpy as np
+from pathlib import Path
 
 from juxtorpus.interfaces.clonable import Clonable
 from juxtorpus.corpus.slicer import CorpusSlicer, SpacyCorpusSlicer
@@ -156,6 +157,12 @@ class Corpus(Clonable):
             if isinstance(meta, SeriesMeta):
                 meta_series.append(pd.Series(meta.series, name=meta_id))
         return pd.concat(meta_series, axis=1)
+
+    def to_csv(self, path: Union[str, Path]):
+        self.to_dataframe().to_csv(path, index=False)
+
+    def to_excel(self, path: Union[str, Path]):
+        self.to_dataframe().to_excel(path, index=False, sheet_name=self.name)
 
     def __init__(self, text: pd.Series, metas: Union[dict[str, Meta], MetaRegistry] = None, name: str = None):
         self._name = None
