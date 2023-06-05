@@ -42,11 +42,11 @@ coolname = "^2.2.0"
 
 # atap
 #atap-widgets = { version = "^0.3.0", python = ">=3.8,<3.11" }
-atap_widgets = {git = "https://github.com/Australian-Text-Analytics-Platform/atap_widgets.git", rev = "0ddc4cadb0f10b7bb466bbf14b13f5adb8eeea61"}
-quotation_tool = {git = "https://github.com/Australian-Text-Analytics-Platform/quotation-tool.git", rev = "24a3bb2e807418d8da715efdd1f9819846696340"}
+#atap_widgets = {git = "https://github.com/Australian-Text-Analytics-Platform/atap_widgets.git", rev = "0ddc4cadb0f10b7bb466bbf14b13f5adb8eeea61"}
+#quotation_tool = {git = "https://github.com/Australian-Text-Analytics-Platform/quotation-tool.git", rev = "24a3bb2e807418d8da715efdd1f9819846696340"}
 
 
-spacytextblob = "^4.0.0"
+#spacytextblob = "^4.0.0"
 
 [tool.poetry.dev-dependencies]
 jupyterlab = "^3.6"
