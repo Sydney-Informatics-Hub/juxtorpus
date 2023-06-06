@@ -144,8 +144,9 @@ def timelines(corpora, names: list[str], datetime_meta: str, freq: str, meta_nam
 
     freq_to_label = {'w': 'Week', 'm': 'Month', 'y': 'Year', 'd': 'Day'}
     key = freq.strip()[-1].lower()
+    f = freq.strip()[0]
 
-    title = f"Count by {freq_to_label.get(key, key)}"
+    title = f"Count by {f} {freq_to_label.get(key, key)}"
     xaxis_title, yaxis_title = f"{freq_to_label.get(key, key)}", "Count"
     fig.update_layout(title=title, xaxis_title=xaxis_title, yaxis_title=yaxis_title)
     return fig
