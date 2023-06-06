@@ -45,8 +45,13 @@ class Similarity(object):
         if use_lemmas:
             # check if corpus are spacy corpus.
             raise NotImplementedError("To be implemented. Use unique lemmas instead of words.")
-        u0: set[str] = self._jux().corpus_0.vocab
-        u1: set[str] = self._jux().corpus_1.vocab
+        jux = self._jux()
+        u0: set[str] = jux.corpus_0.vocab
+        u1: set[str] = jux.corpus_1.vocab
+        inter, union = len(u0.intersection(u1)), len(u0.union(u1))
+        if union == 0: return 0
+        if union < 0: raise RuntimeError("Union is < 0, this should not happen.")
+        if inter < 0: raise RuntimeError("Intersection is < 0, this should not happen.")
         return len(u0.intersection(u1)) / len(u0.union(u1))
 
     def lsa_pairwise_cosine(self, n_components: int = 100, verbose=False):
