@@ -100,6 +100,7 @@ class Similarity(object):
     def _cos_sim_tf(self, without: list[str] = None) -> float:
         seriess = list()
         for i, corpus in enumerate(self._jux().corpora):
+            if len(corpus) <= 0: return 0.0
             ft = corpus.dtm.freq_table(nonzero=True)
             if without: ft.remove(without)
             seriess.append(ft.series.rename(CORPUS_ID_COL_NAME_FORMAT.format(ft.name, i)))
@@ -110,6 +111,7 @@ class Similarity(object):
     def _cos_sim_tfidf(self, **kwargs):
         seriess = list()
         for i, corpus in enumerate(self._jux().corpora):
+            if len(corpus) <= 0: return 0.0
             ft = corpus.dtm.tfidf(**kwargs).freq_table(nonzero=True)
             seriess.append(ft.series.rename(CORPUS_ID_COL_NAME_FORMAT.format(ft.name, i)))
         res = pd.concat(seriess, axis=1).fillna(0)
