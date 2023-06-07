@@ -5,6 +5,7 @@ import filecmp
 import zipfile
 import os
 import threading
+from queue import Queue
 
 from juxtorpus.interfaces import Container
 
@@ -29,7 +30,7 @@ class DeduplicatedDirectory(Container):
         self._dir_path = dir_path
         self._index = dict()
         self._hash_alg = hashlib.md5
-        self._index_threads = list()
+        self._index_thread_queue = Queue(maxsize=1)
 
     @property
     def path(self) -> pathlib.Path:
@@ -56,10 +57,11 @@ class DeduplicatedDirectory(Container):
 
     def add(self, file: pathlib.Path):
         """ Adds a file to the directory. Raises error if file already exists. """
+        file = pathlib.Path(file)
         if not file.is_file():
             raise ValueError(f"{file.name} is not a file.")
         added = self._add_from(file, self._dir_path)
-        self._start_build_index()
+        self._start_index_build()
         return added
 
     def _add_from(self, file: pathlib.Path, start_at: pathlib.Path):
@@ -79,7 +81,7 @@ class DeduplicatedDirectory(Container):
             raise ValueError(f"File name: {fname} and its content are duplicated.")
         new_file_path = self._dir_path.joinpath(fname)
         with open(new_file_path, 'wb') as fh: fh.write(content)
-        self._start_build_index()
+        self._start_index_build()
         return new_file_path
 
     def add_zip(self, path: pathlib.Path, verbose=False):
@@ -90,7 +92,7 @@ class DeduplicatedDirectory(Container):
         with zipfile.ZipFile(path, 'r') as z:
             dir_ = self._dir_path.joinpath(pathlib.Path(z.filename).name)
             z.extractall(dir_)
-            self._start_build_index()
+            self._start_index_build()
             return len(z.namelist())
 
     def add_directory(self, path: pathlib.Path, verbose=False):
@@ -100,7 +102,7 @@ class DeduplicatedDirectory(Container):
         if self._filename_exists(path.name, root_only=True):
             raise ValueError(f"{path} already exists.")
         added = self._add_directory_from(path, self._dir_path, verbose=verbose)
-        self._start_build_index()
+        self._start_index_build()
         return added
 
     def _add_directory_from(self, path: pathlib.Path, start_at: pathlib.Path, verbose=False):
@@ -137,6 +139,7 @@ class DeduplicatedDirectory(Container):
         existing: pathlib.Path
         for existing in self.files():
             os.remove(existing)
+        self._start_index_build()
 
     def exists(self, file: pathlib.Path, shallow: bool = True) -> bool:
         """ Check if file already exists in the directory.
@@ -180,22 +183,23 @@ class DeduplicatedDirectory(Container):
         return False
 
     def _wait_for_index_build(self):
-        while len(self._index_threads) > 0:
-            self._index_threads.pop().join()
+        self._index_thread_queue.join()
 
-    def _start_build_index(self):
-        self._wait_for_index_build()
+    def _start_index_build(self):
         thread = threading.Thread(target=self._build_index)
         thread.start()
-        self._index_threads.append(thread)
 
-    def _build_index(self):  # todo: this should be async
+    def _build_index(self):
+        self._wait_for_index_build()
+        self._index_thread_queue.put(1)
         for existing in self.files():
             if existing in self._index.values():
                 continue
             with open(existing, 'rb') as fh:
                 digest = self._hash_alg(fh.read()).hexdigest()
             self._index[digest] = existing
+        self._index_thread_queue.get()
+        self._index_thread_queue.task_done()  # unblocks queue.
 
     def _add_to_index(self, digest: str, path: pathlib.Path):
         self._index[digest] = path
