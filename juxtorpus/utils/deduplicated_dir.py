@@ -70,6 +70,8 @@ class DeduplicatedDirectory(Container):
         if self.exists(file):
             raise ValueError(f"{file.name} already exists.")
         new_file_path = start_at.joinpath(file.name)
+        if new_file_path.exists():
+            raise FileExistsError(f"{new_file_path} already exist.")
         shutil.copy(file, new_file_path)
         return new_file_path
 
