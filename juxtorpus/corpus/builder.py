@@ -347,7 +347,7 @@ class CorpusBuilder(Widget):
             metas[col] = SeriesMeta(col, series)
         return metas, series_text
 
-    def read(self, path: Union[Path, tuple[Path, bytes]],
+    def read(self, path: Union[Union[Path, str], tuple[Union[Path, str], bytes]],
              nrows=None,
              usecols=None,
              dtype=None,
@@ -373,13 +373,20 @@ class CorpusBuilder(Widget):
         elif path.suffix == '.zip':
             with zipfile.ZipFile(path, 'r') as z:
                 dfs = list()
-                for file in z.namelist():
-                    file, data = Path(file), z.read(file)
-                    if file.suffix == ".zip":
-                        logger.warning(f"{file.name} is a nested zip. Skipped.")
+                for file in z.filelist:
+                    # skip directory files
+                    if file.is_dir(): continue
+                    # skip hidden files
+                    if Path(file.filename).name.startswith('.'):
+                        logger.warning(f"f{file} is a hidden file. Skipped.")
+                        continue
+                    # skip nested zips
+                    if file.filename.endswith(".zip"):  # zipfile python 3.9 api (no .suffix)
+                        logger.warning(f"{file} is a nested zip. Skipped.")
                         continue
                     # todo: meta data file branching
-                    df = self.read((file, data), nrows, usecols=usecols, dtype=dtype, **kwargs)
+                    data = z.read(file)
+                    df = self.read((z.filename + '/' + file.filename, data), nrows, usecols=usecols, dtype=dtype, **kwargs)
                     dfs.append(df)
             return pd.concat(dfs, axis=0)
         else:
