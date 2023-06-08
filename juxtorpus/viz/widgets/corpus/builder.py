@@ -8,6 +8,7 @@ from juxtorpus.viz import Widget
 from juxtorpus.viz.widgets import FileUploadWidget
 from juxtorpus.corpus import generate_name
 from juxtorpus.viz.style.ipyw import no_horizontal_scroll
+from juxtorpus.utils.utils_ipywidgets import debounce
 
 f_selector_layout = {'width': '98%', 'height': '100%'}
 f_uploader_layout = {'width': '98%', 'height': '50px'}
@@ -203,6 +204,7 @@ class CorpusBuilderFileUploadWidget(Widget):
 
         box_file_stats = Box(layout=Layout(**box_df_layout))
 
+        @debounce(0.3)
         def _observe_file_selected(event):
             # from pprint import pprint
             selected = event.get('new')
