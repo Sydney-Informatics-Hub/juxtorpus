@@ -59,10 +59,7 @@ class FileUploadWidget(Widget):
             for fdata in new_files:
                 content = fdata.get('content')
                 fname = fdata.get('name')
-                if fname.endswith('.zip'):
-                    added = self._add_zip(content, fname)
-                else:
-                    added = self._add_file(content, fname)
+                added = self._add_file(content, fname)
                 if callable(self._callback): self._callback(self, added)
 
     def _get_files_data(self, change):
@@ -75,7 +72,7 @@ class FileUploadWidget(Widget):
             return fdata_list
         return new  # support v8.x
 
-    def _add_zip(self, content, fname):
+    def _add_and_extract_zip(self, content, fname):
         try:
             logger.info(f"Extracting {fname} to {self._dir.path}. Please wait...")
             tmp_zip_dir = pathlib.Path(tempfile.mkdtemp())
