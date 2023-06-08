@@ -58,9 +58,9 @@ class FileUploadWidget(Widget):
         self._callback = callback
 
     def _on_upload(self, change):
+        self._progress_bar.value = 10
         new_files = self._get_files_data(change)
         pbar_increments = int(len(new_files) / 100)
-        self._progress_bar.value = 10
         for fdata in new_files:
             content = fdata.get('content')
             fname = fdata.get('name')
