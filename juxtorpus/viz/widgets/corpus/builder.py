@@ -223,7 +223,7 @@ class CorpusBuilderFileUploadWidget(Widget):
         f_selector.observe(_observe_file_selected, names='value')
         button_confirm = Button(description='Confirm',
                                 layout=Layout(width='20%', height='50px'))
-        hbox_uploader = HBox([VBox([f_selector, fuw._uploader], layout=Layout(width='50%', height='200px')),
+        hbox_uploader = HBox([VBox([f_selector, fuw.widget()], layout=Layout(width='50%', height='200px')),
                               VBox([box_file_stats, button_confirm], layout=Layout(width='50%', height='200px'))],
                              layout=Layout(width='100%', height='100%'))
 
