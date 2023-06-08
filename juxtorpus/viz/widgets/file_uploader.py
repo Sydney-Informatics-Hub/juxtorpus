@@ -1,6 +1,6 @@
 import tempfile
 from typing import Callable
-from ipywidgets import FileUpload, Output, VBox, widgets
+from ipywidgets import FileUpload, Output, VBox, widgets, Layout
 from IPython.display import display
 import pathlib
 import logging.config
@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 from juxtorpus.viz import Widget
 from juxtorpus.utils import DeduplicatedDirectory
+from juxtorpus.viz.style.ipyw import no_horizontal_scroll
 
 """
 NOTE: File size limit using jupyter notebooks.
@@ -37,8 +38,11 @@ class FileUploadWidget(Widget):
             error=self.ERR_FAILED_UPLOAD,
             layout=widgets.Layout(width='320px')
         )
+        self._progress_bar = widgets.IntProgress(min=0, max=100,
+                                                 style={'bar_color': 'orange'},
+                                                 orientation='horizontal',
+                                                 layout=Layout(**no_horizontal_scroll))
         # required for ipython renders
-        self._output = Output()
         self._uploader.observe(self._on_upload, names=['value'])  # 'value' for when any file is uploaded.
 
         self._callback = None
@@ -47,23 +51,23 @@ class FileUploadWidget(Widget):
         return self._dir.files(hidden)
 
     def widget(self):
-        return display(VBox([self._uploader, self._output]))
+        return VBox([self._uploader, self._progress_bar])
 
     def set_callback(self, callback: Callable):
         if not callable(callback): raise ValueError(f"Callback must be a function or a callable.")
         self._callback = callback
 
     def _on_upload(self, change):
-        with self._output:
-            new_files = self._get_files_data(change)
-            for fdata in new_files:
-                content = fdata.get('content')
-                fname = fdata.get('name')
-                if fname.endswith('.zip'):
-                    added = self._add_zip(content, fname)
-                else:
-                    added = self._add_file(content, fname)
-                if callable(self._callback): self._callback(self, added)
+        new_files = self._get_files_data(change)
+        pbar_increments = int(len(new_files) / 100)
+        self._progress_bar.value = 10
+        for fdata in new_files:
+            content = fdata.get('content')
+            fname = fdata.get('name')
+            added = self._add_file(content, fname)
+            if callable(self._callback): self._callback(self, added)
+            self._progress_bar.value = min(self._progress_bar.value + pbar_increments, 100)
+        self._progress_bar.value = 100
 
     def _get_files_data(self, change):
         new = change.get('new')
@@ -75,7 +79,7 @@ class FileUploadWidget(Widget):
             return fdata_list
         return new  # support v8.x
 
-    def _add_zip(self, content, fname):
+    def _add_and_extract_zip(self, content, fname):
         try:
             logger.info(f"Extracting {fname} to {self._dir.path}. Please wait...")
             tmp_zip_dir = pathlib.Path(tempfile.mkdtemp())

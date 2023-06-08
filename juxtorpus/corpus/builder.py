@@ -1,6 +1,9 @@
+import io
+import zipfile
+
 import pandas as pd
 import pathlib
-from pathlib import Path
+from pathlib import Path, PurePath
 from functools import partial
 from typing import Union, Callable, Optional, Generator
 from IPython.display import display
@@ -344,11 +347,41 @@ class CorpusBuilder(Widget):
             metas[col] = SeriesMeta(col, series)
         return metas, series_text
 
-    def read(self, path: Path, nrows=None, usecols=None, dtype=None, **kwargs) -> pd.DataFrame:
+    def read(self, path: Union[Path, tuple[Path, bytes]],
+             nrows=None,
+             usecols=None,
+             dtype=None,
+             **kwargs) -> pd.DataFrame:
+        if isinstance(path, tuple):
+            if len(path) != 2: raise ValueError(f"path must be either a Path or tuple[Path, bytes]. {path=}")
+            if not isinstance(path[0], PurePath) and not isinstance(path[0], str):
+                raise TypeError(f"Expecting Path in tuple. Got {type(path[0])}.")
+            if not isinstance(path[1], bytes):
+                raise TypeError(f"Expecting Bytes in tuple. Got {type(path[1])}")
+            path, data = path
+            path = Path(path)
+        elif isinstance(path, PurePath) or isinstance(path, str):
+            path, data = Path(path), open(path, 'rb').read()
+        else:
+            raise ValueError(f"path must be either a Path or tuple[Path, bytes]. {path=}")
         if path.suffix == '.csv':
-            return pd.read_csv(path, nrows=nrows, usecols=usecols, dtype=dtype, **kwargs)
+            return pd.read_csv(io.BytesIO(data), nrows=nrows, usecols=usecols, dtype=dtype, **kwargs)
         elif path.suffix in ('.xlsx', '.xls'):
-            return pd.read_excel(path, nrows=nrows, usecols=usecols, dtype=dtype, **kwargs)
+            return pd.read_excel(io.BytesIO(data), nrows=nrows, usecols=usecols, dtype=dtype, **kwargs)
+        elif path.suffix in ('.txt'):
+            return pd.DataFrame([(data.decode('utf-8'), path.name)], columns=[Corpus.COL_DOC, 'file_name'])
+        elif path.suffix == '.zip':
+            with zipfile.ZipFile(path, 'r') as z:
+                dfs = list()
+                for file in z.namelist():
+                    file, data = Path(file), z.read(file)
+                    if file.suffix == ".zip":
+                        logger.warning(f"{file.name} is a nested zip. Skipped.")
+                        continue
+                    # todo: meta data file branching
+                    df = self.read((file, data), nrows, usecols=usecols, dtype=dtype, **kwargs)
+                    dfs.append(df)
+            return pd.concat(dfs, axis=0)
         else:
             raise NotImplementedError("Only .csv and .xlsx are supported.")
 
