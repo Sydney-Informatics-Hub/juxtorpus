@@ -25,9 +25,9 @@ chardet = "^5.0.0"
 colorlog = "^6.7.0"
 
 # ml
-transformers = "^4.23.1"
+#transformers = "^4.23.1"
 scipy = "^1.9.3"
-torch = ">=1.12.0"
+#torch = ">=1.12.0"
 scikit-learn = "^1.1.1"
 
 # viz
@@ -42,10 +42,16 @@ coolname = "^2.2.0"
 
 # atap
 #atap-widgets = { version = "^0.3.0", python = ">=3.8,<3.11" }
+atap_widgets = {git = "https://github.com/Australian-Text-Analytics-Platform/atap_widgets.git", rev = "0ddc4cadb0f10b7bb466bbf14b13f5adb8eeea61"}
+quotation_tool = {git = "https://github.com/Australian-Text-Analytics-Platform/quotation-tool.git", rev = "24a3bb2e807418d8da715efdd1f9819846696340"}
+
+
+spacytextblob = "^4.0.0"
 
 [tool.poetry.dev-dependencies]
 jupyterlab = "^3.6"
 jupyterlab-vim = "^0.15"
+jupyterlab-git = "^0.41.0"
 
 
 [build-system]

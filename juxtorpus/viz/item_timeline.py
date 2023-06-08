@@ -25,21 +25,18 @@ Properties:
 1. expose terms
 2. expose terms and their colours
 """
-import pandas as pd
 from pandas.api.types import is_datetime64_dtype
-import numpy as np
 from typing import Union, Optional
 import plotly.graph_objs as go
 from collections import namedtuple
 from functools import partial
-import re
-import colorsys
 import random
 import ipywidgets as widgets
 from IPython.display import display
 import pandas as pd
+from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS
 
-from juxtorpus.viz import Viz
+from juxtorpus.viz import Widget
 from juxtorpus.corpus import Corpus
 from juxtorpus.corpus.freqtable import FreqTable
 from juxtorpus.corpus.meta import SeriesMeta
@@ -49,7 +46,7 @@ TNUMERIC = Union[int, float]
 TPLOTLY_RGB_COLOUR = str
 
 
-class ItemTimeline(Viz):
+class ItemTimeline(Widget):
     """ ItemTimeline
     This visualisation class plots a number of items and their associated metric across a timeline.
     The two modes for the metrics are:
@@ -66,6 +63,36 @@ class ItemTimeline(Viz):
     TRACE_DATUM = namedtuple('TRACE_DATUM', ['item', 'datetimes', 'metrics', 'colour', 'texts'])
 
     @classmethod
+    def from_corpus(cls, corpus: Corpus, datetime_meta_key: str = None, freq: str = '1w', use_custom_dtm: bool = False):
+        keys = {'datetime': datetime_meta_key}
+        if datetime_meta_key is None:
+            for k, meta in corpus.meta.items():
+                if type(meta) != SeriesMeta: continue
+                if pd.api.types.is_datetime64_any_dtype(meta.series):
+                    keys['datetime'] = k
+                    break
+            if not keys.get('datetime'): raise LookupError(f"No meta found with datetime dtype. {corpus.meta.keys()}")
+        datetime_meta_key = keys.get('datetime')
+        return cls.from_corpus_groups(corpus.slicer.group_by(datetime_meta_key, pd.Grouper(freq=freq)), use_custom_dtm)
+
+    @classmethod
+    def from_corpus_groups(cls, groups, use_custom_dtm: bool = False):
+        """ Constructss ItemTimeline from corpus groups.
+        :arg use_custom_dtm - use the cached custom dtm instead of default.
+        """
+        groups = list(groups)
+        datetimes = []
+        for dt, _ in groups:
+            if type(dt) != pd.Timestamp: raise TypeError("Did you groupby a meta that is of type datetime?")
+            datetimes.append(dt)
+
+        if not use_custom_dtm:
+            fts = [c.dtm.freq_table() for _, c in groups]
+        else:
+            fts = [c.custom_dtm.freq_table() for _, c in groups]
+        return cls.from_freqtables(datetimes, fts)
+
+    @classmethod
     def from_freqtables(cls, datetimes: Union[pd.Series, list], freqtables: list[FreqTable]):
         """ Constructs ItemTimeline using the specified freqtables.
         :arg datetimes - list of datetimes for each freqtable (converted using pd.to_datetime)
@@ -78,50 +105,20 @@ class ItemTimeline(Viz):
         fts_df.set_index(datetimes, inplace=True)
         return cls(df=fts_df)
 
-    @classmethod
-    def from_corpus(cls, corpus: Corpus, datetime_meta_key: str = None, freq: str = '1w', custom_dtm: bool = False):
-        keys = {'datetime': datetime_meta_key}
-        if datetime_meta_key is None:
-            for k, meta in corpus.meta.items():
-                if type(meta) != SeriesMeta: continue
-                if pd.api.types.is_datetime64_any_dtype(meta.series):
-                    keys['datetime'] = k
-                    break
-            if not keys.get('datetime'): raise LookupError(f"No meta found with datetime dtype. {corpus.meta.keys()}")
-        datetime_meta_key = keys.get('datetime')
-        return cls.from_corpus_groups(corpus.slicer.group_by(datetime_meta_key, pd.Grouper(freq=freq)), custom_dtm)
-
-    @classmethod
-    def from_corpus_groups(cls, groups, custom_dtm: bool = False):
-        """ Constructss ItemTimeline from corpus groups.
-        :arg custom_dtm - use the cached custom dtm instead of default.
-        """
-        groups = list(groups)
-        datetimes = []
-        for dt, _ in groups:
-            if type(dt) != pd.Timestamp: raise TypeError("Did you groupby a meta that is of type datetime?")
-            datetimes.append(dt)
-
-        if not custom_dtm:
-            fts = [c.dtm.freq_table() for _, c in groups]
-        else:
-            fts = [c.custom_dtm.freq_table() for _, c in groups]
-        return cls.from_freqtables(datetimes, fts)
-
     def __init__(self, df: pd.DataFrame):
         """ Initialise with a dataframe with a datetime index, item columns and values as metrics. """
         self._df: pd.DataFrame = df
         assert is_datetime64_dtype(self._df.index), "DataFrame Index must be datetime."
         self.datetimes = self._df.index.to_list()
 
-        self.MODE_PEAK = 'PEAK'
-        self.MODE_CUMULATIVE = 'CUMULATIVE'
-        self.modes = {
-            self.MODE_PEAK: partial(pd.DataFrame.max, axis=0),  # across datetime
-            self.MODE_CUMULATIVE: partial(pd.DataFrame.sum, axis=0)
+        self.SORT_BY_PEAK = 'PEAK'
+        self.SORT_BY_TOTAL = 'TOTAL'
+        self.sort_bys = {
+            self.SORT_BY_PEAK: partial(pd.DataFrame.max, axis=0),  # across datetime
+            self.SORT_BY_TOTAL: partial(pd.DataFrame.sum, axis=0)
         }
-        self.DEFAULT_MODE = self.MODE_PEAK
-        self.mode = self.DEFAULT_MODE
+        self.DEFAULT_SORT_BY = self.SORT_BY_TOTAL
+        self.sort_by = self.DEFAULT_SORT_BY
         self._metric_series = None
         self.items = None
 
@@ -131,7 +128,13 @@ class ItemTimeline(Viz):
 
         self.MAX_NUM_TRACES = 100
 
-        self._update_metrics(self.mode, self.num_traces)
+        # stop words
+        self.no_stopwords = False
+
+        # search bar states
+        self.__first_search = True
+
+        self._update_metrics(self.sort_by, self.num_traces, self.no_stopwords)
 
         # opacity
         self.FULL_OPACITY_TOP = 3  # top number of items with full opacity
@@ -144,31 +147,40 @@ class ItemTimeline(Viz):
         """ Set the seed across all item timeline objects. """
         random.seed(seed)
 
-    def set_mode(self, mode: Optional[str]):
+    def set_sort_by(self, sort_by: Optional[str]):
         """ Sets the mode of the timeline as 'Peak' or 'Cumulative'. """
         # updates the items to display.
-        if mode is None:
-            self.mode = None
+        if sort_by is None:
+            self.sort_by = None
             self.items = self._df.columns.to_list()
         else:
-            mode = mode.upper()
-            if mode not in self.modes.keys(): raise ValueError(f"{mode} not in {', '.join(self.modes.keys())}")
-            self.mode = mode
-            self._update_metrics(self.mode, self.num_traces)
+            sort_by = sort_by.upper()
+            if sort_by not in self.sort_bys.keys(): raise ValueError(
+                f"{sort_by} not in {', '.join(self.sort_bys.keys())}")
+            self.sort_by = sort_by
+            self._update_metrics(self.sort_by, self.num_traces, self.no_stopwords)
 
     def set_top(self, top: int):
         if top < 1: raise ValueError(f"Must be > 1.")
         self.num_traces = top
-        self._update_metrics(self.mode, self.num_traces)
+        self._update_metrics(self.sort_by, self.num_traces, self.no_stopwords)
 
-    def _update_metrics(self, mode: str, top: int):
-        metric_series = self.modes.get(mode)(self._df)
+    def set_no_stopwords(self, no_stopwords: bool):
+        if not isinstance(no_stopwords, bool): raise TypeError("no_stopwords must be a boolean.")
+        self.no_stopwords = no_stopwords
+        self._update_metrics(self.sort_by, self.num_traces, no_stopwords=self.no_stopwords)
+
+    def _update_metrics(self, sort_by: str, top: int, no_stopwords: bool):
+        metric_series = self.sort_bys.get(sort_by)(self._df)
+        if no_stopwords:
+            sw_in_metric_series = [item for item in metric_series.index.tolist() if item in ENGLISH_STOP_WORDS]
+            metric_series = metric_series.drop(sw_in_metric_series, axis=0)
         metric_series.sort_values(ascending=False, inplace=True)
         metric_series = metric_series.iloc[:top]
         self._metric_series = metric_series
         self.items = self._metric_series.index.to_list()
 
-    def render(self):
+    def widget(self):
         fig = self._build_main_figure()
         display(self._build_widgets(fig))
         return fig
@@ -184,12 +196,15 @@ class ItemTimeline(Viz):
         return fig
 
     def _build_widgets(self, fig):
-        mode_dropdown = self._create_dropdown_widget(fig)
-        item_search = self._create_search_bar(fig)
         trace_slider = self._create_num_traces_slider(fig)
-        trace_slider.layout.width = '45%'
+        trace_slider.layout.width = '35%'
+        sw_checkbox = self._create_stopwords_checkbox(fig)
+        sw_checkbox.layout.width = '150px'
+        sw_checkbox.style = {'description_width': '0px'}
         pad_box = widgets.Box(layout=widgets.Layout(width='5%'))
-        return widgets.HBox([trace_slider, pad_box, mode_dropdown, item_search],
+        sort_by_dropdown = self._create_dropdown_widget(fig)
+        item_search = self._create_search_bar(fig)
+        return widgets.HBox([trace_slider, sw_checkbox, pad_box, sort_by_dropdown, item_search],
                             layout=widgets.Layout(width='100%', height='40px'))
 
     @staticmethod
@@ -226,14 +241,14 @@ class ItemTimeline(Viz):
 
     def _create_dropdown_widget(self, fig):
         dropdown = widgets.Dropdown(
-            options=[mode.capitalize() for mode in sorted(list(self.modes.keys()))],
-            value=self.mode.capitalize(),
-            description='Mode: ',
+            options=[mode.capitalize() for mode in sorted(list(self.sort_bys.keys()))],
+            value=self.sort_by.capitalize(),
+            description='Sort by: ',
             disabled=False,
         )
 
         def observe_dropdown(event):
-            self.set_mode(dropdown.value.upper())
+            self.set_sort_by(dropdown.value.upper())
             self._update_traces(fig)
 
         dropdown.observe(observe_dropdown)
@@ -246,13 +261,19 @@ class ItemTimeline(Viz):
         @debounce(0.1)
         def observe_search(event):
             query = event.get('new')
-            # pattern = re.compile(query, re.IGNORECASE)
+            if self.__first_search:
+                # deselect all -- this is needed for intuitive search. i.e. when searching for multiple items.
+                self.__first_search = False
+                with fig.batch_update():
+                    for trace in fig.data: trace.visible = 'legendonly'
             with fig.batch_update():
                 for trace in fig.data:
-                    if query.upper() in trace.name.upper():
+                    if query.upper() == trace.name.upper():
                         trace.visible = True
+                    elif query.upper() in trace.name.upper():
+                        trace.visible = 'legendonly' if trace.visible is not True else True
                     else:
-                        trace.visible = False
+                        trace.visible = False if trace.visible is not True else True
 
         search_bar.observe(observe_search, names='value')
         return search_bar
@@ -270,6 +291,17 @@ class ItemTimeline(Viz):
 
         slider.observe(observe_slider, names='value')
         return slider
+
+    def _create_stopwords_checkbox(self, fig):
+        sw_checkbox = widgets.Checkbox(description='Remove stopwords')
+        sw_checkbox.value = self.no_stopwords
+
+        def observe_checkbox(event):
+            self.set_no_stopwords(event.get('new'))
+            self._update_traces(fig)
+
+        sw_checkbox.observe(observe_checkbox, names='value')
+        return sw_checkbox
 
     @staticmethod
     def _add_toggle_all_selection_layer(fig):
@@ -334,7 +366,7 @@ class ItemTimeline(Viz):
 
     def _get_opacity(self, item):
         # no modes selected
-        if self.mode is None: return 1.0
+        if self.sort_by is None: return 1.0
         else:
             # top
             idx = self._metric_series.index.get_loc(item)
@@ -346,16 +378,18 @@ class ItemTimeline(Viz):
             return 0.1
 
     def _get_title(self, idx):
-        return f'Top {idx} {self.mode.capitalize()} items'
+        return f'Top {idx} {self.sort_by.capitalize()} items'
 
     def _get_texts(self, item: str, idx: int):
+        """ Return the annotation when mouse is hovered over the series."""
         number = self._metric_series.loc[item]
         if idx >= self.FULL_OPACITY_TOP:
             idx = -1  # i.e. no text annotation for this trace.
-        elif self.mode == self.MODE_PEAK:
+        elif self.sort_by == self.SORT_BY_PEAK:
             idx = self._df.loc[:, item].argmax()
-        elif self.mode == self.MODE_CUMULATIVE:
+        elif self.sort_by == self.SORT_BY_TOTAL:
             idx = len(self.datetimes) - 1
         else:
-            raise RuntimeError(f"Unsupported Mode. {self.mode} not in {self.modes.keys()}. This should not happen.")
+            raise RuntimeError(
+                f"Unsupported Mode. {self.sort_by} not in {self.sort_bys.keys()}. This should not happen.")
         return ['' if i != idx else str(number) for i in range(len(self.datetimes))]

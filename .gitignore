@@ -148,3 +148,7 @@ mtcc.pdf
 notebooks/Untitled.ipynb
 #**/*.ipynb
 #**/*.csv
+notebooks/demos/*.csv
+notebooks/demos/taster_workshop/twcs.csv
+notebooks/demos/taster_workshop/twcs.csv
+notebooks/demos/taster_workshop/twcs_proccessed.csv

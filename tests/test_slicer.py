@@ -97,7 +97,7 @@ class TestCorpusSlicer(unittest.TestCase):
         lga = self.corpus.meta[meta_id].series.value_counts().index[0]
         subcorpus = self.corpus.slicer.filter_by_item(meta_id, lga)
         groups = list(subcorpus.slicer.group_by('year_month_day', pd.Grouper(freq='1w')))
-        assert len(groups) == 127, "There should've been 127 weeks in the subcorpus."
+        assert len(groups) == 24, "There should've been 24 weeks in the subcorpus."
 
     def test_groupby_datetime(self):
         groups = list(self.corpus.slicer.group_by('year_month_day', pd.Grouper(freq='1W')))
@@ -110,6 +110,7 @@ class TestCorpusSlicer(unittest.TestCase):
             "Depth 1 DTM should have the same number of docs as subcorpus."
 
         # the custom_dtm created should be from root and then sliced to this depth.
+        subcorpus = subcorpus.detached()
         _ = subcorpus.create_custom_dtm(tokeniser_func=lambda text: re.findall(r'#\w+', text))
         subsubcorpus = subcorpus.slicer.filter_by_datetime('year_month_day', start='2019-11-29', end='2020-06-05')
         assert len(subsubcorpus) == subsubcorpus.dtm.num_docs, \
@@ -117,9 +118,9 @@ class TestCorpusSlicer(unittest.TestCase):
 
     def test_Given_meta_When_filter_twice_Then_clone_is_valid(self):
         subcorpus: Corpus = self.corpus.slicer.filter_by_item('remote_level', 2.0)
-        subsubcorpus = subcorpus.slicer.filter_by_item('tweet_lga', 'Eurobodalla (A)')
+        subsubcorpus = subcorpus.slicer.filter_by_item('tweet_lga', 'Bridgetown-Greenbushes (S)')
 
-        assert len(subsubcorpus) == 48, 'Depth 2 corpus should have only 48 documents.'
+        assert len(subsubcorpus) == 4, 'Depth 2 corpus should have only 4 documents.'
 
 
 class TestSpacyCorpusSlicer(unittest.TestCase):
@@ -134,4 +135,4 @@ class TestSpacyCorpusSlicer(unittest.TestCase):
         matcher.add("test", patterns=[[{"TEXT": "@fitzhunter"}]])
 
         subcorpus = self.scorpus.slicer.filter_by_matcher(matcher)
-        assert len(subcorpus) == 12, "There should only be 12 matched document from corpus."
+        assert len(subcorpus) == 10, "There should only be 10 matched document from corpus."

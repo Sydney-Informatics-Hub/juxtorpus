@@ -1,7 +1,7 @@
 from typing import Optional
 from abc import ABC
 
-from ipywidgets import Label, Layout, HBox, GridBox, VBox, Button
+from ipywidgets import Label, Layout, HBox, GridBox, VBox, Button, HTML
 from ipywidgets import Checkbox
 from juxtorpus.viz.style.ipyw import center_style, corpus_id_layout, size_layout, parent_layout, hbox_style
 from juxtorpus.viz import Widget
@@ -12,6 +12,9 @@ import logging
 
 logger = logging.getLogger()
 
+_SHOW_BUILDER_DESCRIPTION = 'Upload a Corpus'
+_HIDE_BUILDER_DESCRIPTION = 'Hide'
+
 
 class CorporaWidget(Widget, ABC):
     """ CorporaWidget
@@ -21,9 +24,9 @@ class CorporaWidget(Widget, ABC):
     """
 
     _corpus_selector_labels = [
-        Label("Corpus ID", layout=Layout(**corpus_id_layout, **center_style)),
-        Label("Size", layout=Layout(**size_layout, **center_style)),
-        Label("Parent", layout=Layout(**parent_layout, **center_style))
+        HTML("<b>Corpus</b>", layout=Layout(**corpus_id_layout, **center_style)),
+        HTML("<b>Size</b>", layout=Layout(**size_layout, **center_style)),
+        HTML("<b>Parent</b>", layout=Layout(**parent_layout, **center_style))
     ]
 
     def __init__(self, corpora: 'Corpora'):
@@ -33,11 +36,13 @@ class CorporaWidget(Widget, ABC):
         self._builder.set_callback(self._on_build_add_to_self)
 
         self._selector: VBox = self._corpus_selector()
+        self._selected_checkbox = None
 
         self._widget = VBox([self._toggle_builder_button(), self._create_empty(), self._selector],
                             layout=Layout(grid_template_columns='repeat(2, 1fr)'))
 
     def widget(self) -> GridBox:
+        self._refresh_corpus_selector()
         return self._widget
 
     def _corpus_selector(self, selected: Optional[str] = None) -> VBox:
@@ -71,6 +76,7 @@ class CorporaWidget(Widget, ABC):
         value, owner = event.get('new'), event.get('owner')
         if value:
             selected = self.corpora.get(owner.description.strip())
+            self._selected_checkbox = owner
             if not selected:
                 raise RuntimeError(f"Corpus: {owner.description} does not exist. This should not happen.")
             self._toggle_checkboxes(owner)
@@ -85,21 +91,23 @@ class CorporaWidget(Widget, ABC):
             self._widget.children = (*self._widget.children[:3],)
 
     def _toggle_checkboxes(self, checked: Checkbox):
+        if checked is None: return
         for hboxes in self._selector.children:
             for cb in hboxes.children:
                 if isinstance(cb, Checkbox):
-                    cb.value = cb == checked
+                    cb.value = cb.description == checked.description
 
     def _toggle_builder_button(self):
-        button = Button(description='Show Builder')
+        button = Button(description=_SHOW_BUILDER_DESCRIPTION,
+                        layout=Layout(width='300px'))
 
         def _on_click_toggle(_):
             if self._builder_appeared():
                 self._widget.children = (self._widget.children[0], self._create_empty(), *self._widget.children[2:])
-                button.description = "Show Builder"
+                button.description = _SHOW_BUILDER_DESCRIPTION
             else:
                 self._widget.children = (self._widget.children[0], self._builder.widget(), *self._widget.children[2:])
-                button.description = "Hide Builder"
+                button.description = _HIDE_BUILDER_DESCRIPTION
 
         button.on_click(_on_click_toggle)
         return button
@@ -114,10 +122,12 @@ class CorporaWidget(Widget, ABC):
         self._refresh_corpus_selector()
 
     def _refresh_corpus_selector(self):
+        self._selector = self._corpus_selector()
+        self._toggle_checkboxes(self._selected_checkbox)
         if self._slicer_appeared():
-            self._widget.children = (*self._widget.children[:2], self._corpus_selector(), *self._widget.children[3:])
+            self._widget.children = (*self._widget.children[:2], self._selector, *self._widget.children[3:])
         else:
-            self._widget.children = (*self._widget.children[:2], self._corpus_selector(),)
+            self._widget.children = (*self._widget.children[:2], self._selector,)
 
     def _builder_appeared(self):
         return not self._is_empty(self._widget.children[1])

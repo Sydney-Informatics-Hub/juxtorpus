@@ -46,6 +46,7 @@ Notes:
 """
 
 from spacy import Language
+from spacy.tokens import Doc
 from datetime import datetime
 import pandas as pd
 from tqdm.auto import tqdm
@@ -55,27 +56,30 @@ from juxtorpus.corpus.processors import Processor, ProcessEpisode
 from juxtorpus.corpus.processors.components import Component
 from juxtorpus.corpus.processors.components.hashtags import HashtagComponent
 from juxtorpus.corpus.processors.components.mentions import MentionsComp
-from juxtorpus.corpus.processors.components.sentiment import SentimentComp
-from juxtorpus.corpus.meta import DocMeta
+from juxtorpus.corpus.meta import DocMeta, SeriesMeta
 
 import colorlog
 
 logger = colorlog.getLogger(__name__)
 
 
-@Language.factory("extract_hashtags")
+@Language.factory("extract_hashtags", assigns=['doc._.hashtags'])
 def create_hashtag_component(nlp: Language, name: str):
     return HashtagComponent(nlp, name, attr='hashtags')
 
 
-@Language.factory("extract_mentions")
+@Language.factory("extract_mentions", assigns=['doc._.mentions'])
 def create_mention_component(nlp: Language, name: str):
     return MentionsComp(nlp, name, attr='mentions')
 
+""" Archived: see components.sentiment.py
 
-@Language.factory("extract_sentiments")
+from juxtorpus.corpus.processors.components.sentiment import SentimentComp
+
+@Language.factory("extract_sentiments", assigns=['doc._.sentiment'])
 def create_sentiment(nlp: Language, name: str):
     return SentimentComp(nlp, name, attr='sentiment')
+"""
 
 
 class SpacyProcessor(Processor):
@@ -100,13 +104,13 @@ class SpacyProcessor(Processor):
         start = datetime.now()
         logger.debug(f"Processing corpus of {len(corpus)} documents...")  # TODO: DH demo changed to debug
         texts = corpus.docs()
-        # doc_generator = (doc for doc in tqdm(self.nlp.pipe(texts)))
-        doc_generator = self.nlp.pipe(texts)
+        texts_generator = (t for t in tqdm(texts, total=len(texts), desc='Spacy Corpus', colour='orange'))
+        doc_generator = self.nlp.pipe(texts_generator)
         docs = pd.Series(doc_generator, index=texts.index)
         logger.debug("Done.")
         logger.debug(f"Elapsed time: {datetime.now() - start}s.")
 
-        scorpus = SpacyCorpus(docs, corpus.meta, self.nlp, self._source, corpus.name)
+        scorpus = SpacyCorpus(docs, corpus.meta, self.nlp, self._source, corpus.name + '[spacy]')
         scorpus._dtm_registry = corpus._dtm_registry
         scorpus._parent = corpus.parent
         return scorpus
@@ -116,12 +120,33 @@ class SpacyProcessor(Processor):
 
         Note: attribute name can come from custom extensions OR spacy built in. see built_in_component_attrs.
         """
-        for name, comp in self.nlp.pipeline:
-            _attr = comp.attr if isinstance(comp, Component) else self.built_in_component_attrs.get(name, None)
-            if _attr is None: continue
-            generator = corpus._df.loc[:, corpus.COL_DOC]
-            meta = DocMeta(id_=name, attr=_attr, nlp=self.nlp, docs=generator)
-            corpus._meta_registry[meta.id] = meta
+        pipe_analysis = self.nlp.analyze_pipes()
+        all_attrs = pipe_analysis.get('attrs').keys()
+        doc_attrs = (attr for attr in all_attrs if attr.lower().startswith('doc.'))
+
+        doc_attr: str
+        for doc_attr in doc_attrs:
+            id_ = doc_attr.replace('doc', '')
+            attr = id_.split('.')[-1] if id_.startswith('._.') else id_[1:]
+            # docs = corpus._df.loc[:, corpus.COL_DOC]
+            docs = corpus.docs()
+            meta = DocMeta(id_=id_, attr=attr, nlp=self.nlp, docs=docs)
+            corpus.add_meta(meta=meta)
+
+        # ensure all user keys are assigned even with the arg: assign is not used.
+        doc: Doc = corpus[0]
+        for dunder_str, attr, _, _ in doc.user_data.keys():
+            id_ = dunder_str + attr
+            if corpus.meta.get(id_, False): continue
+            docs = corpus.docs()
+            meta = DocMeta(id_=id_, attr=attr, nlp=self.nlp, docs=docs)
+            corpus.add_meta(meta)
+
+            if attr == 'polarity':
+                sentiment = corpus.docs().apply(lambda doc: doc._.polarity)
+                corpus.add_meta(SeriesMeta(id_='sentiment', series=sentiment))
+
+
 
     def _create_episode(self) -> ProcessEpisode:
         return ProcessEpisode(

@@ -6,10 +6,12 @@ from spacy import Language
 from sklearn.feature_extraction.text import CountVectorizer
 import re
 import coolname
+import numpy as np
+from pathlib import Path
 
 from juxtorpus.interfaces.clonable import Clonable
 from juxtorpus.corpus.slicer import CorpusSlicer, SpacyCorpusSlicer
-from juxtorpus.corpus.meta import Meta, SeriesMeta
+from juxtorpus.corpus.meta import Meta, SeriesMeta, DocMeta
 from juxtorpus.corpus.dtm import DTM
 from juxtorpus.corpus.viz import CorpusViz
 from juxtorpus.matchers import is_word, is_word_tweets, is_hashtag, is_mention
@@ -24,7 +26,8 @@ _ALL_CORPUS_NAMES = set()
 _CORPUS_NAME_SEED = 42
 
 
-def generate_name(corpus: 'Corpus') -> str:
+def generate_name() -> str:
+    global _ALL_CORPUS_NAMES
     # todo: should generate a random name based on corpus words
     # tmp solution - generate a random name.
     while name := coolname.generate_slug(2):
@@ -32,6 +35,11 @@ def generate_name(corpus: 'Corpus') -> str:
             continue
         else:
             return name
+
+
+def ensure_docs(docs: pd.Series):
+    docs.name = Corpus.COL_DOC  # set default doc name
+    return docs.apply(lambda d: str(d) if not isinstance(d, Doc) else d)
 
 
 class Corpus(Clonable):
@@ -68,6 +76,7 @@ class Corpus(Clonable):
         def __init__(self, *args, **kwargs):
             super(Corpus.DTMRegistry, self).__init__(*args, **kwargs)
             self.set_tokens_dtm(DTM())
+            self._corpus_to_custom_dtm_index_map = None
 
         def __setitem__(self, key, value):
             if not isinstance(value, DTM):
@@ -80,11 +89,29 @@ class Corpus(Clonable):
         def get_tokens_dtm(self) -> DTM:
             return self.get('tokens')
 
-        def set_custom_dtm(self, dtm):
+        def set_custom_dtm(self, dtm, current_corpus_index: pd.Index):
             self['custom'] = dtm
+            # current corpus's index and custom dtm index will be mismatched when created from a child corpus.
+            self._corpus_to_custom_dtm_index_map = self._build_custom_dtm_index_mapper(
+                current_corpus_index=current_corpus_index,
+                num_docs_in_dtm=dtm.num_docs
+            )
+
+        @staticmethod
+        def _build_custom_dtm_index_mapper(current_corpus_index, num_docs_in_dtm: int):
+            if not len(current_corpus_index) == num_docs_in_dtm:
+                raise ArithmeticError(f"Corpus size and dtm size must match. "
+                                      f"Got corpus={len(current_corpus_index)} dtm={num_docs_in_dtm}")
+            mapping = zip(current_corpus_index, range(num_docs_in_dtm))
+            return dict(mapping)
 
         def get_custom_dtm(self) -> DTM:
             return self.get('custom', None)
+
+        def to_custom_dtm_index(self, index: pd.Index) -> pd.Index:
+            if self._corpus_to_custom_dtm_index_map is None:
+                raise ValueError("Did you set a custom dtm?")
+            return pd.Index([self._corpus_to_custom_dtm_index_map[idx] for idx in index])
 
     class MetaRegistry(dict):
         def __init__(self, *args, **kwargs):
@@ -131,11 +158,17 @@ class Corpus(Clonable):
                 meta_series.append(pd.Series(meta.series, name=meta_id))
         return pd.concat(meta_series, axis=1)
 
-    def __init__(self, text: pd.Series, metas: Union[dict[str, Meta], MetaRegistry] = None, name: str = None):
-        self._name = name if name else generate_name(self)
+    def to_csv(self, path: Union[str, Path]):
+        self.to_dataframe().to_csv(path, index=False)
 
-        text.name = self.COL_DOC
-        self._df: pd.DataFrame = pd.DataFrame(text, columns=[self.COL_DOC])
+    def to_excel(self, path: Union[str, Path]):
+        self.to_dataframe().to_excel(path, index=False, sheet_name=self.name)
+
+    def __init__(self, text: pd.Series, metas: Union[dict[str, Meta], MetaRegistry] = None, name: str = None):
+        self._name = None
+        self.name = name if name else generate_name()
+
+        self._df: pd.DataFrame = pd.DataFrame(ensure_docs(text), columns=[self.COL_DOC])
         # ensure initiated object is well constructed.
         assert len(list(filter(lambda x: x == self.COL_DOC, self._df.columns))) <= 1, \
             f"More than 1 {self.COL_DOC} column in dataframe."
@@ -166,12 +199,21 @@ class Corpus(Clonable):
     @name.setter
     def name(self, name):
         global _ALL_CORPUS_NAMES
-        if name in _ALL_CORPUS_NAMES:
+        while name in _ALL_CORPUS_NAMES:
             new_name = name + '_'
             logger.info(f"{name} already exists. It renamed to {new_name}")
             name = new_name
-        _ALL_CORPUS_NAMES = _ALL_CORPUS_NAMES.union(name)
+        _ALL_CORPUS_NAMES.add(name)
+
+        if self.name is not None:
+            try:
+                _ALL_CORPUS_NAMES.remove(self.name)
+            except KeyError:
+                logger.debug(f'Failed to remove {self.name} from global corpus name cache.')
         self._name = name
+
+    def rename(self, name: str):
+        self.name = name
 
     @property
     def parent(self) -> 'Corpus':
@@ -199,6 +241,9 @@ class Corpus(Clonable):
     def custom_dtm(self) -> DTM:
         return self._dtm_registry.get_custom_dtm()
 
+    def freq_table(self) -> pd.Series:
+        return self.dtm.freq_table().series
+
     @property
     def viz(self) -> CorpusViz:
         return self._viz
@@ -211,22 +256,37 @@ class Corpus(Clonable):
             parent = parent._parent
         return parent
 
-    def create_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]]) -> DTM:
-        """ Detaches from root corpus and then build a custom dtm. """
-        _ = self.detached()
-        return self._update_custom_dtm(tokeniser_func)
+    def create_custom_dtm(self,
+                          tokeniser_func: Callable[[TDoc], list[str]],
+                          preprocessor_func: Callable[[TDoc], TDoc] = None,
+                          inplace: bool = True,
+                          **kwargs) -> DTM:
+        """ Create a custom DTM based on a user defined tokeniser function.
 
-    def _update_custom_dtm(self, tokeniser_func: Callable[[TDoc], list[str]]) -> DTM:
-        """ Create a custom DTM based on custom tokeniser function. """
-        root = self.find_root()
-        dtm = DTM()
-        dtm.initialise(root.docs(),
-                       vectorizer=CountVectorizer(preprocessor=lambda x: x, tokenizer=tokeniser_func))
+        :arg tokeniser_func - callable that receives the document as argument and must return a list of strs.
+        :arg preprocessor_func - callable that receives the document as argument and must return the document.
+        :arg inplace - replace the existing custom dtm for this corpus. (default=True)
+        :arg kwargs - all other arguments you can pass to CountVectorizer https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
+        """
+        if tokeniser_func is not None and not callable(tokeniser_func):
+            raise ValueError(f"{tokeniser_func} must be a callable.")
+        if preprocessor_func is None: preprocessor_func = lambda _: _
+        if not callable(preprocessor_func): raise ValueError(f"{preprocessor_func} must be a callable.")
 
-        root._dtm_registry.set_custom_dtm(dtm)
-        if not self.is_root:
-            self._dtm_registry.set_custom_dtm(dtm.cloned(self.docs().index))
-        return self._dtm_registry.get_custom_dtm()
+        vectoriser = CountVectorizer(tokenizer=tokeniser_func,
+                                     preprocessor=preprocessor_func,
+                                     analyzer='word',  # must be 'word' to use tokenizer arg
+                                     **kwargs)
+        cdtm = DTM()
+        cdtm.initialise(self.docs(), vectorizer=vectoriser)
+        if inplace:
+            self._dtm_registry.set_custom_dtm(dtm=cdtm, current_corpus_index=self._df.index)
+            return self._dtm_registry.get_custom_dtm()
+        else:
+            return cdtm
+
+    def clear_custom_dtm(self):
+        self._dtm_registry.set_custom_dtm(None)
 
     # meta data
     @property
@@ -256,6 +316,8 @@ class Corpus(Clonable):
         docs_info.rename(index=mapper, inplace=True)
 
         other_info = pd.Series({
+            'Name': self.name,
+            'Parent': self.parent.name if self.parent is not None else '',
             "Corpus Type": self.__class__.__name__,
             "Number of Documents": len(self),
             "Number of Total Words": self.dtm.total,
@@ -269,7 +331,8 @@ class Corpus(Clonable):
 
     def sample(self, n: int, rand_stat=None) -> 'Corpus':
         """ Uniformly sample from the corpus. """
-        mask = self._df.isna().squeeze()  # Return a mask of all False
+        # mask = self._df.isna().squeeze()  # Return a mask of all False
+        mask = pd.Series(np.zeros(len(self)), dtype=bool, index=self._df.index)
         mask[mask.sample(n=n, random_state=rand_stat).index] = True
         return self.cloned(mask)
 
@@ -295,7 +358,7 @@ class Corpus(Clonable):
                 yield word
 
     def _gen_words_from(self, doc) -> Generator[str, None, None]:
-        return (token.lower() for token in self._pattern_words.findall(doc))
+        return (token for token in self._pattern_words.findall(doc))
 
     def generate_hashtags(self) -> Generator[str, None, None]:
         for doc in self.docs():
@@ -337,7 +400,8 @@ class Corpus(Clonable):
         registry = Corpus.DTMRegistry()
         registry.set_tokens_dtm(self._dtm_registry.get_tokens_dtm().cloned(mask))
         if self._dtm_registry.get_custom_dtm() is not None:
-            registry.set_custom_dtm(self._dtm_registry.get_custom_dtm().cloned(mask))
+            custom_dtm_mask = pd.Series(mask.values, index=self._dtm_registry.to_custom_dtm_index(mask.index))
+            registry.set_custom_dtm(self._dtm_registry.get_custom_dtm().cloned(custom_dtm_mask), mask[mask].index)
         return registry
 
     def detached(self) -> 'Corpus':
@@ -345,8 +409,6 @@ class Corpus(Clonable):
 
         DTM will be regenerated when accessed - hence a different vocab.
         """
-        self._parent = None
-        self._dtm_registry = Corpus.DTMRegistry()
         meta_reg = Corpus.MetaRegistry()
         for k, meta in self.meta.items():
             if isinstance(meta, SeriesMeta):
@@ -354,9 +416,9 @@ class Corpus(Clonable):
                 meta_reg[sm.id] = sm
             else:
                 meta_reg[k] = meta
-        self._meta_registry = meta_reg
-        self._df = self._df.copy().reset_index(drop=True)
-        return self
+        df = self._df.copy().reset_index(drop=True)
+        detached = self.__class__(text=df[self.COL_DOC], metas=meta_reg)
+        return detached
 
     def __len__(self):
         return len(self._df) if self._df is not None else 0
@@ -470,10 +532,10 @@ class SpacyCorpus(Corpus):
         return df
 
     def _gen_words_from(self, doc: Doc):
-        return (doc[start: end].text.lower() for _, start, end in self._is_word_matcher(doc))
+        return (doc[start: end].text for _, start, end in self._is_word_matcher(doc))
 
     def _gen_hashtags_from(self, doc: Doc):
-        return (doc[start: end].text.lower() for _, start, end in self._is_hashtag_matcher(doc))
+        return (doc[start: end].text for _, start, end in self._is_hashtag_matcher(doc))
 
     def _gen_mentions_from(self, doc: Doc):
         return (doc[start: end].text.lower() for _, start, end in self._is_mention_matcher(doc))
@@ -485,3 +547,16 @@ class SpacyCorpus(Corpus):
 
     def _gen_lemmas_from(self, doc):
         return (doc[start: end].lemma_ for _, start, end in self._is_word_matcher(doc))
+
+    def detached(self) -> 'SpacyCorpus':
+        detached_corpus = super().detached()
+        return self.__class__.from_corpus(detached_corpus, self._nlp, self._source)
+
+    # def to_dataframe(self):
+    #     to_concats = [super().to_dataframe()]
+    #     for meta_id, meta in self.meta.items():
+    #         if isinstance(meta, DocMeta):
+    #             to_concat = self.docs().apply(lambda doc: meta._get_doc_attr(doc))
+    #             to_concat.name = meta_id
+    #             to_concats.append(to_concat)
+    #     return pd.concat(to_concats, axis=1)

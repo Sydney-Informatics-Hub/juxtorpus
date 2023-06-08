@@ -2,6 +2,8 @@
 
 https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest
 """
+""" Archived: removed transformers and torch dependencies to lighten Docker image size.
+
 from spacy.tokens import Doc
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer, AutoConfig
@@ -56,9 +58,8 @@ class Sentiment(object):
 class SentimentComp(Component):
     def __init__(self, nlp: Language, name: str, attr: str):
         super(SentimentComp, self).__init__(nlp, name, attr)
-        if Doc.has_extension(self._attr):
-            raise KeyError(f"{self._attr} already exists. {SentimentComp.__name__} will not function properly.")
-        Doc.set_extension(self._attr, default={})
+        if not Doc.has_extension(self._attr):
+            Doc.set_extension(self._attr, default={})
         self.sentiment = None
 
     def __call__(self, doc: Doc) -> Doc:
@@ -79,3 +80,4 @@ if __name__ == '__main__':
     sentiment = Sentiment()
     sentiments = sentiment.score(text)
     print(sentiments)
+"""
