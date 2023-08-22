@@ -147,6 +147,17 @@ class DTM(Clonable):
         """ Return the document vector represented by the terms. """
         raise NotImplementedError()
 
+    def to_lists_of_terms(self) -> list[list[str]]:
+        """ Return the DTM as lists of list of terms."""
+        nonzeros = self.matrix.nonzero()
+        word_lists = [list() for _ in range(self.shape[0])]
+        for row, col in zip(*nonzeros):
+            freq = self.matrix[row, col]
+            term = self.term_names[col]
+            terms = [term] * freq
+            word_lists[row].extend(terms)
+        return word_lists
+
     def _term_to_idx(self, term: str):
         if term not in self.root._term_idx_map.keys(): raise ValueError(f"'{term}' not found in document-term-matrix.")
         return self.root._term_idx_map.get(term)
