@@ -328,6 +328,10 @@ class DTM(Clonable):
         else:
             return f"<DTM Uninitialised>"
 
+    def is_compatible(self, corpus: 'Corpus') -> bool:
+        """ Checks if this DTM is compatible with corpus. """
+        return len(corpus) == self.shape[0]
+
 
 if __name__ == '__main__':
     from juxtorpus.corpus.corpus import Corpus
