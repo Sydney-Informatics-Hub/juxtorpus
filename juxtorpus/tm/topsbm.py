@@ -131,15 +131,15 @@ class TopSBM(TopicModel, Serialisable):
 
         This operation does not repeat if already added.
         """
-        custom_dtm = self._add_doc_topic_dtm()
-        logger.debug(f"Added {custom_dtm} dtm to corpus.")
+        custom_dtm_id = self._add_doc_topic_dtm()
+        logger.debug(f"Added {custom_dtm_id} dtm to corpus.")
         topic_meta_ids = self._add_topics_as_metas()
         logger.debug(f"Added {', '.join(topic_meta_ids)} metas to corpus.")
 
         # todo: no indirect topic-word information is kept.
         #  (Currently, user should keep this object themselves)
         return {
-            'custom_dtm': custom_dtm,
+            'custom_dtm_id': custom_dtm_id,
             'meta_ids': topic_meta_ids
         }
 
