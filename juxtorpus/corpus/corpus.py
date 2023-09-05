@@ -89,8 +89,8 @@ class Corpus(Clonable):
         def get_tokens_dtm(self) -> DTM:
             return self.get('tokens')
 
-        def set_custom_dtm(self, dtm, current_corpus_index: pd.Index):
-            self['custom'] = dtm
+        def set_custom_dtm(self, dtm: DTM, dtm_id: str, current_corpus_index: pd.Index):
+            self[dtm_id] = dtm
             # current corpus's index and custom dtm index will be mismatched when created from a child corpus.
             self._corpus_to_custom_dtm_index_map = self._build_custom_dtm_index_mapper(
                 current_corpus_index=current_corpus_index,
@@ -113,6 +113,15 @@ class Corpus(Clonable):
                 raise ValueError("Did you set a custom dtm?")
             return pd.Index([self._corpus_to_custom_dtm_index_map[idx] for idx in index])
 
+        def get_or_raise_err(self, id_: str) -> DTM:
+            dtm = self.get(id_, None)
+            if dtm is None: raise KeyError(f"{id_} does not exist in DTM registry.")
+            return dtm
+
+        @property
+        def tokens_dtm_id(self) -> str:
+            return 'tokens'
+
     class MetaRegistry(dict):
         def __init__(self, *args, **kwargs):
             super(Corpus.MetaRegistry, self).__init__(*args, **kwargs)
@@ -128,9 +137,9 @@ class Corpus(Clonable):
 
             return df.T
 
-        def get_or_raise_err(self, id_: str):
+        def get_or_raise_err(self, id_: str) -> Meta:
             meta = self.get(id_, None)
-            if meta is None: raise KeyError(f"{id_} does not exist.")
+            if meta is None: raise KeyError(f"{id_} does not exist in Meta registry.")
             return meta
 
     COL_DOC: str = 'document'
@@ -399,9 +408,10 @@ class Corpus(Clonable):
     def _cloned_dtms(self, mask) -> DTMRegistry:
         registry = Corpus.DTMRegistry()
         registry.set_tokens_dtm(self._dtm_registry.get_tokens_dtm().cloned(mask))
-        if self._dtm_registry.get_custom_dtm() is not None:
+        cdtm_ids = set(self._dtm_registry.keys()).difference({self._dtm_registry.tokens_dtm_id})
+        for cdtm_id in cdtm_ids:
             custom_dtm_mask = pd.Series(mask.values, index=self._dtm_registry.to_custom_dtm_index(mask.index))
-            registry.set_custom_dtm(self._dtm_registry.get_custom_dtm().cloned(custom_dtm_mask), mask[mask].index)
+            registry.set_custom_dtm(self._dtm_registry[cdtm_id].cloned(custom_dtm_mask), cdtm_id, mask[mask].index)
         return registry
 
     def detached(self) -> 'Corpus':
