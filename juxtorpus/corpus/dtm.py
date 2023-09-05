@@ -9,6 +9,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from typing import Optional
+from scipy.sparse import csr_matrix
+
 from juxtorpus.interfaces.clonable import Clonable
 from juxtorpus.corpus.freqtable import FreqTable
 
@@ -48,14 +51,13 @@ class DTM(Clonable):
 
     def __init__(self):
         self.root = self
-        self._vectorizer = None
-        self._matrix = None
-        self._feature_names_out = None
+        self._vectorizer = None  # todo: can be removed.
+        self._matrix: Optional[csr_matrix] = None
+        self._feature_names_out: Optional[np.ndarray] = None
         self._term_idx_map = None
-        self._is_built = False
         self.derived_from = None  # for any dtms derived from word frequencies
 
-        # only used for child dtms
+        # only used for child dtms (do not override these)
         self._row_indices = None
         self._col_indices = None
 
@@ -130,7 +132,6 @@ class DTM(Clonable):
 
         self.root._term_idx_map = {self.root._feature_names_out[idx]: idx
                                    for idx in range(len(self.root._feature_names_out))}
-        self.root._is_built = True
         logger.debug("Done.")
         return self
 
@@ -191,7 +192,6 @@ class DTM(Clonable):
         tfidf._matrix = tfidf._vectorizer.fit_transform(self.matrix)
         tfidf._feature_names_out = self.term_names
         tfidf._term_idx_map = {tfidf._feature_names_out[idx]: idx for idx in range(len(tfidf._feature_names_out))}
-        tfidf._is_built = True
         return tfidf
 
     def to_dataframe(self) -> pd.DataFrame:
@@ -217,7 +217,7 @@ class DTM(Clonable):
             self._col_indices = None
 
     @classmethod
-    def from_matrix(cls, matrix: Union[np.ndarray, np.matrix], terms):
+    def from_matrix(cls, matrix: Union[np.ndarray, np.matrix, csr_matrix], terms: np.ndarray):
         num_terms: int
         if isinstance(terms, list): num_terms = len(terms)
         elif isinstance(terms, np.ndarray) and len(terms.shape) == 1: num_terms = terms.shape[0]
@@ -229,7 +229,6 @@ class DTM(Clonable):
         dtm = cls()
         dtm._matrix = matrix
         dtm._feature_names_out = terms
-        dtm._is_built = True
         return dtm
 
     def shares_vocab(self, other: 'DTM') -> bool:
