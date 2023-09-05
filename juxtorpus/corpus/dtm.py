@@ -61,7 +61,7 @@ class DTM(Clonable):
 
     @property
     def is_built(self) -> bool:
-        return self.root._is_built
+        return self.root._matrix is not None
 
     @property
     def matrix(self):
