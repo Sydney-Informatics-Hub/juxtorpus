@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import pandas as pd
 from .loglikelihood_effectsize import log_likelihood_and_effect_size
@@ -13,9 +13,16 @@ class Statistics(object):
     def __init__(self, jux: 'Jux'):
         self._jux = jux
 
-    def log_likelihood_and_effect_size(self, baseline: FreqTable = None):
-        ftables = [self._jux.corpus_0.dtm.freq_table(nonzero=True),
-                   self._jux.corpus_1.dtm.freq_table(nonzero=True)]
+    def log_likelihood_and_effect_size(self, dtm_ids: Optional[tuple[str]] = None, baseline: FreqTable = None):
+        if dtm_ids:
+            if len(dtm_ids) != 2: raise ValueError(f"Expecting 2 DTM ids but got {len(dtm_ids)}.")
+            ftables = [
+                self._jux.corpus_0._dtm_registry[dtm_ids[0]].freq_table(nonzero=True),
+                self._jux.corpus_1._dtm_registry[dtm_ids[1]].freq_table(nonzero=True),
+            ]
+        else:
+            ftables = [self._jux.corpus_0.dtm.freq_table(nonzero=True),
+                       self._jux.corpus_1.dtm.freq_table(nonzero=True)]
 
         if baseline is None:
             res = log_likelihood_and_effect_size(ftables)

@@ -69,9 +69,9 @@ class Polarity(object):
         df['polarity'] = df[renamed_ft[0][0]] - df[renamed_ft[1][0]]
         return df
 
-    def log_likelihood(self, tokeniser_func: Optional = None):
+    def log_likelihood(self, dtm_ids: Optional[tuple[str]] = None, tokeniser_func: Optional = None):
         j = self._jux()
-        llv = j.stats.log_likelihood_and_effect_size()
+        llv = j.stats.log_likelihood_and_effect_size(dtm_ids=dtm_ids, tokeniser_func=tokeniser_func)
         tf_polarity = self.tf(tokeniser_func)['polarity']
         llv['polarity'] = (tf_polarity * llv['log_likelihood_llv']) / tf_polarity.abs()
         return llv
@@ -167,7 +167,7 @@ class Polarity(object):
         sw = stopwords
         sw.extend(ENGLISH_STOP_WORDS)
 
-        df = self.log_likelihood(None)
+        df = self.log_likelihood(dtm_ids=dtm_ids, tokeniser_func=None)
         tf_df = self.tf(dtm_ids=dtm_ids)
         df['summed'] = tf_df['freq_corpus_0'] + tf_df['freq_corpus_1']
         df['polarity_div_summed'] = df['polarity'].abs() / df['summed']
