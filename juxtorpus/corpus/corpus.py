@@ -266,6 +266,7 @@ class Corpus(Clonable):
         return parent
 
     def create_custom_dtm(self,
+                          dtm_id: str,
                           tokeniser_func: Callable[[TDoc], list[str]],
                           preprocessor_func: Callable[[TDoc], TDoc] = None,
                           inplace: bool = True,
@@ -289,7 +290,7 @@ class Corpus(Clonable):
         cdtm = DTM()
         cdtm.initialise(self.docs(), vectorizer=vectoriser)
         if inplace:
-            self._dtm_registry.set_custom_dtm(dtm=cdtm, current_corpus_index=self._df.index)
+            self._dtm_registry.set_custom_dtm(dtm=cdtm, current_corpus_index=self._df.index, dtm_id=dtm_id)
             return self._dtm_registry.get_custom_dtm()
         else:
             return cdtm
