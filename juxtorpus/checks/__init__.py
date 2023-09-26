@@ -5,10 +5,11 @@ import pandas as pd
 import os
 import codecs
 from chardet.universaldetector import UniversalDetector
+from pathlib import Path
 
 
 class FlaggedPath(object):
-    def __init__(self, path: pathlib.Path, reason: str):
+    def __init__(self, path: Path, reason: str):
         self.path = path
         self.reason = reason
 
@@ -28,17 +29,12 @@ class FileSizeCheck(Check):
     def __init__(self, max_bytes: int):
         self.max_size = max_bytes
 
-    def __call__(self, path: pathlib.Path) -> bool:
+    def __call__(self, path: Path) -> bool:
         # print(f"File: {path} Size: {path.stat().st_size} bytes")
         return path.stat().st_size < self.max_size
 
     def reason(self):
         return self.REASON.format(self.max_size)
-
-
-def check_file_lang(file: pathlib.Path):
-    # print(f"file_lang: checking file - {file}")
-    return True
 
 
 class EncodingCheck(Check):
@@ -72,7 +68,7 @@ class EncodingCheck(Check):
     def expected(self):
         return self._expected
 
-    def __call__(self, path: pathlib.Path) -> bool:
+    def __call__(self, path: Path) -> bool:
         detector = self._detector
         with open(path, 'rb') as h:
             for i, line in enumerate(h):
@@ -97,12 +93,12 @@ class FileCheckers(object):
         self._flagged = dict()
         self._passed = list()
 
-    def run(self, paths: Iterable[pathlib.Path]):
+    def run(self, paths: Iterable[Path]):
         if isinstance(paths, Generator):
             paths = list(paths)
         paths = self._to_paths(paths)
         flagged = dict()
-        path: pathlib.Path
+        path: Path
         for path in paths:
             for check in self.checks:
                 passed = check(path)
@@ -140,20 +136,33 @@ class FileCheckers(object):
 
     def _to_paths(self, paths):
         for i, p in enumerate(paths):
-            if not isinstance(p, pathlib.Path):
-                paths[i] = pathlib.Path(p)
+            if not isinstance(p, Path):
+                paths[i] = Path(p)
         return paths
 
 
 if __name__ == '__main__':
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    parser.add_argument("--dir", required=True, help="Directory containing your files to run checkers.")
+    args = parser.parse_args()
+
+    dir_ = Path(args.dir)
+
+
+    def check_file_lang(file: Path):
+        print(f"file_lang: checking file - {file}")
+        return True
+
+
     checks = [
         check_file_lang,
         FileSizeCheck(max_bytes=1_000_000)  # 1Mb
     ]
     file_checks = FileCheckers(checks)
 
-    HOME = os.getenv("HOME")
-    paths = pathlib.Path(f"{HOME}/Downloads/Data/Top100_Text_1/").rglob("*.txt")
+    paths = dir_.glob("*")
 
     flagged = file_checks.run(paths)
 
