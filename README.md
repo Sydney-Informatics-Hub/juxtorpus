@@ -13,7 +13,7 @@ To run this notebook, click on the button below to launch a free binder instance
 # Contributors
 A quick way to set up your dev environment.
 ```shell
-./init.dev.sh
+./init_env.dev.sh
 ```
 
 To build the `requirements.txt` file for binder:
