@@ -15,10 +15,7 @@ openpyxl = "^3.1.1"
 spacy = "^v3.4.1"
 thinc-apple-ops = { extras = ["apple"], version = "^0.1.0", platform = "apple" }
 #en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.4.0/en_core_web_sm-3.4.0-py3-none-any.whl" }
-# ipywidget
 ipywidgets = "^7.7.2"    # 8.x.x latest - backwards compatibility kept for FileUpload widget
-# algos
-#rake-nltk = "^1.0.6"
 # file checkers
 chardet = "^5.0.0"
 # loggers
@@ -41,20 +38,12 @@ pyldavis = "^3.4.0"   # from 3.4.1 onwards - requires pandas >= 2.0
 # misc
 coolname = "^2.2.0"
 
-# atap
-#atap-widgets = { version = "^0.3.0", python = ">=3.8,<3.11" }
-#atap_widgets = {git = "https://github.com/Australian-Text-Analytics-Platform/atap_widgets.git", rev = "0ddc4cadb0f10b7bb466bbf14b13f5adb8eeea61"}
-#quotation_tool = {git = "https://github.com/Australian-Text-Analytics-Platform/quotation-tool.git", rev = "24a3bb2e807418d8da715efdd1f9819846696340"}
-
-
-#spacytextblob = "^4.0.0"
 panel = "^1.2.2"
 
 [tool.poetry.dev-dependencies]
 jupyterlab = "^3.6"
 jupyterlab-vim = "^0.15"
 jupyterlab-git = "^0.41.0"
-
 
 [build-system]
 requires = ["poetry-core"]

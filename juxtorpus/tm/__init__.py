@@ -6,3 +6,5 @@ class TopicModel(metaclass=ABCMeta):
 
 
 from .topsbm import TopSBM
+
+__all__ = ['TopSBM']

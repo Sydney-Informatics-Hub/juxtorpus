@@ -152,3 +152,7 @@ notebooks/demos/*.csv
 notebooks/demos/taster_workshop/twcs.csv
 notebooks/demos/taster_workshop/twcs.csv
 notebooks/demos/taster_workshop/twcs_proccessed.csv
+
+
+# temporarily ignore locally cloned topsbm
+topsbm/
