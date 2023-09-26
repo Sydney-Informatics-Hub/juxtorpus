@@ -44,12 +44,12 @@ class Polarity(object):
             'log_likelihood': self._wordcloud_log_likelihood
         }
 
-    def tf(self, tokeniser_func: Optional = None, lower=True):
+    def tf(self, dtm_ids: Optional[tuple[str]] = None, lower=True):
         """ Uses the term frequency to produce the polarity score.
 
         Polarity = Corpus 0's tf - Corpus 1's tf.
         """
-        dtms = self._selected_dtms(tokeniser_func, lower=lower)
+        dtms = self._selected_dtms(tokeniser_func=None, dtm_ids=dtm_ids, lower=lower)
         fts = (dtm.freq_table() for dtm in dtms)
 
         renamed_ft = [(f"{ft.name}_corpus_{i}", ft) for i, ft in enumerate(fts)]
@@ -57,12 +57,12 @@ class Polarity(object):
         df['polarity'] = df[renamed_ft[0][0]] - df[renamed_ft[1][0]]
         return df
 
-    def tfidf(self, tokeniser_func: Optional = None, lower=True):
+    def tfidf(self, dtm_ids: Optional[tuple[str]] = None, lower=True):
         """ Uses the tfidf scores to produce the polarity score.
 
         Polarity = Corpus 0's tfidf - Corpus 1's tfidf.
         """
-        dtms = self._selected_dtms(tokeniser_func, lower=lower)
+        dtms = self._selected_dtms(tokeniser_func=None, dtm_ids=dtm_ids, lower=lower)
         fts = (dtm.freq_table() for dtm in dtms)
         renamed_ft = [(f"{ft.name}_corpus_{i}", ft) for i, ft in enumerate(fts)]
         df = pd.concat([ft.series.rename(name) / ft.total for name, ft in renamed_ft], axis=1).fillna(0)
@@ -76,9 +76,13 @@ class Polarity(object):
         llv['polarity'] = (tf_polarity * llv['log_likelihood_llv']) / tf_polarity.abs()
         return llv
 
-    def _selected_dtms(self, tokeniser_func: Optional, **kwargs) -> Generator[DTM, None, None]:
+    def _selected_dtms(self, tokeniser_func: Optional[Callable], dtm_ids: Optional[tuple[str]] = None, **kwargs) \
+            -> Generator[DTM, None, None]:
         """ Return a generator DTMs given a tokeniser function."""
         lower = kwargs.pop('lower', True)
+        if dtm_ids:
+            if len(dtm_ids) != 2: raise ValueError(f"Expecting 2 dtm_ids, Got {len(dtm_ids)}.")
+            return (corpus._dtm_registry[dtm_ids[i]] for i, corpus in enumerate(self._jux().corpora))
         if tokeniser_func:
             return (corpus.create_custom_dtm(tokeniser_func, inplace=False, **kwargs) for corpus in self._jux().corpora)
         if not lower:  # note: corpus.dtm is lowered by default.
@@ -87,7 +91,7 @@ class Polarity(object):
             return (corpus.dtm for corpus in self._jux().corpora)
 
     def wordcloud(self, metric: str, top: int = 50, colours=('blue', 'red'), stopwords: list[str] = None,
-                  tokeniser_func: Optional[Callable] = None, **kwargs):
+                  dtm_ids: Optional[tuple[str]] = None, **kwargs):
         """ Generate a wordcloud using one of the 3 modes tf, tfidf, log_likelihood. """
         polarity_wordcloud_func = self.metrics.get(metric, None)
         if polarity_wordcloud_func is None:
@@ -95,9 +99,15 @@ class Polarity(object):
         assert len(colours) == 2, "There can only be 2 colours. e.g. ('blue', 'red')."
 
         height, width = 24, 24
-        pwc, add_legend = polarity_wordcloud_func(top, colours, tokeniser_func, stopwords, **kwargs)
+        pwc_args = {
+            'top': top,
+            'colours': colours,
+            'dtm_ids': dtm_ids,
+            'stopwords': stopwords,
+        }
+        pwc, add_legend = polarity_wordcloud_func(**pwc_args, **kwargs)
         pwc._build(resolution_scale=int(height * width * 0.005))
-        fig, ax = plt.subplots(figsize=(height/2, width/2))
+        fig, ax = plt.subplots(figsize=(height / 2, width / 2))
 
         names = self._jux().corpus_0.name, self._jux().corpus_1.name
         legend_elements = [Patch(facecolor=colours[0], label=names[0]), Patch(facecolor=colours[1], label=names[1])]
@@ -109,13 +119,13 @@ class Polarity(object):
         plt.tight_layout()  # Adjust the layout to prevent overlapping
         plt.show()
 
-    def _wordcloud_tf(self, top: int, colours: tuple[str], tokeniser_func, stopwords: list[str] = None, **kwargs):
+    def _wordcloud_tf(self, top: int, colours: tuple[str], dtm_ids: tuple[str], stopwords: list[str] = None, **kwargs):
         assert len(colours) == 2, "Only supports 2 colours."
         if stopwords is None: stopwords = list()
         sw = stopwords
         sw.extend(ENGLISH_STOP_WORDS)
 
-        df = self.tf(tokeniser_func, **kwargs)
+        df = self.tf(dtm_ids=dtm_ids, **kwargs)
         df = df[~df.index.isin(sw)]
         df['summed'] = df['freq_corpus_0'] + df['freq_corpus_1']
         df['polarity_div_summed'] = df['polarity'].abs() / df['summed']
@@ -130,13 +140,14 @@ class Polarity(object):
                       Patch(facecolor='None', label='Translucent: Similar frequency'), ]
         return pwc, add_legend
 
-    def _wordcloud_tfidf(self, top: int, colours: tuple[str], tokeniser_func, stopwords: list[str] = None, **kwargs):
+    def _wordcloud_tfidf(self, top: int, colours: tuple[str], dtm_ids: tuple[str], stopwords: list[str] = None,
+                         **kwargs):
         assert len(colours) == 2, "Only supports 2 colours."
         if stopwords is None: stopwords = list()
         sw = stopwords
         sw.extend(ENGLISH_STOP_WORDS)
 
-        df = self.tfidf(tokeniser_func, **kwargs)
+        df = self.tfidf(dtm_ids=dtm_ids, **kwargs)
         df['size'] = df.polarity.abs()
         df = df[~df.index.isin(sw)]
         df_tmp = df.sort_values(by='size', ascending=False).iloc[:top]
@@ -148,7 +159,7 @@ class Polarity(object):
                       Patch(facecolor='None', label='Translucent: Similar tfidf')]
         return pwc, add_legend
 
-    def _wordcloud_log_likelihood(self, top: int, colours: tuple[str], tokeniser_func,
+    def _wordcloud_log_likelihood(self, top: int, colours: tuple[str], dtm_ids: tuple[str],
                                   stopwords: list[str] = None,
                                   **kwargs):
         assert len(colours) == 2, "Only supports 2 colours."
@@ -156,8 +167,8 @@ class Polarity(object):
         sw = stopwords
         sw.extend(ENGLISH_STOP_WORDS)
 
-        df = self.log_likelihood(tokeniser_func)
-        tf_df = self.tf()
+        df = self.log_likelihood(None)
+        tf_df = self.tf(dtm_ids=dtm_ids)
         df['summed'] = tf_df['freq_corpus_0'] + tf_df['freq_corpus_1']
         df['polarity_div_summed'] = df['polarity'].abs() / df['summed']
         df = df[~df.index.isin(sw)]
