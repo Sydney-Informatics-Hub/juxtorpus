@@ -71,7 +71,7 @@ class Polarity(object):
 
     def log_likelihood(self, dtm_ids: Optional[tuple[str]] = None, tokeniser_func: Optional = None):
         j = self._jux()
-        llv = j.stats.log_likelihood_and_effect_size(dtm_ids=dtm_ids, tokeniser_func=tokeniser_func)
+        llv = j.stats.log_likelihood_and_effect_size(dtm_ids=dtm_ids)
         tf_polarity = self.tf(tokeniser_func)['polarity']
         llv['polarity'] = (tf_polarity * llv['log_likelihood_llv']) / tf_polarity.abs()
         return llv
