@@ -2,9 +2,20 @@
 
 set -e
 
-VENV_DIR="./.venv"
+HELP="./$(basename $0) <virutal-env-name>"
+
+if [[ -z $1 ]]; then
+  echo "-- $HELP" >&2
+  exit 1
+fi
+
+VENV_DIR=$1
 POETRY_FILE="./pyproject.toml"
-REQ_FILE="./requirements.dev.txt"
+
+if [[ ! -f $POETRY_FILE ]]; then
+  echo "-- Missing $POETRY_FILE." >&2
+  exit 1
+fi
 
 echo "++ Initialising dev environment..."
 if [[ -d $VENV_DIR ]]; then
@@ -21,20 +32,10 @@ echo "++ Activating virtual env..."
 source $VENV_DIR/bin/activate
 
 echo "++ Installing dependencies..."
-if [[ -f $POETRY_FILE ]]; then
-  echo "++ Found poetry config file."
-  pip install --upgrade pip
-  pip install poetry
-  poetry install --all-extras
-elif [[ -f $REQ_FILE ]]; then
-  echo "++ Poetry config file not found. Found requirements.txt."
-  set +e
-  pip install --upgrade pip
-  pip install -r $REQ_FILE
-else
-  echo "-- Neither $POETRY_FILE or $REQ_FILE is found. No dependencies installed."
-  exit 1
-fi;
+echo "++ Found poetry config file."
+pip install --upgrade pip
+pip install poetry
+poetry install --all-extras
 
 echo "++ Done. Your virtual env is installed at $VENV_DIR"
 echo "To activate your virtual env run: source $VENV_DIR/bin/activate"
