@@ -11,6 +11,8 @@ fi
 
 VENV_DIR=$1
 POETRY_FILE="./pyproject.toml"
+OS=$(uname -o)
+ARCH=$(uname -m)
 
 if [[ ! -f $POETRY_FILE ]]; then
   echo "-- Missing $POETRY_FILE." >&2
@@ -35,7 +37,12 @@ echo "++ Installing dependencies..."
 echo "++ Found poetry config file."
 pip install --upgrade pip
 pip install poetry
-poetry install --all-extras
+
+#:u - uppercase (zsh only)
+if [[ ${ARCH:u} == ARM* && ${OS:u} == "DARWIN" ]]; then
+  poetry install --with "dev,viz,macOS"
+else
+  poetry install --with "dev,viz"
 
 echo "++ Done. Your virtual env is installed at $VENV_DIR"
 echo "To activate your virtual env run: source $VENV_DIR/bin/activate"
