@@ -14,7 +14,7 @@ tests/ltest*
 
 # Virtual Environments
 .venv
-.venv-*
+.venv*
 
 # Jetbrains IDE
 .idea/
