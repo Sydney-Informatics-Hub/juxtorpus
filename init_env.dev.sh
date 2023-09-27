@@ -38,11 +38,13 @@ echo "++ Found poetry config file."
 pip install --upgrade pip
 pip install poetry
 
-#:u - uppercase (zsh only)
-if [[ ${ARCH:u} == ARM* && ${OS:u} == "DARWIN" ]]; then
-  poetry install --with "dev,viz,macOS"
+echo "++ Removing poetry.lock..."
+rm -f poetry.lock
+echo "++ Installing dependencies..."
+if [[ ${ARCH:u} == ARM* && ${OS:u} == "DARWIN" ]]; then   #:u - uppercase (zsh only)
+  poetry install --with "dev" --extras="viz,apple"
 else
-  poetry install --with "dev,viz"
+  poetry install --with "dev" --extras="viz"
 fi
 
 echo "++ Done. Your virtual env is installed at $VENV_DIR"

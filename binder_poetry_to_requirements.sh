@@ -1,6 +1,7 @@
 #!/bin/zsh
 # export poetry dependencies to requirements.txt
-# binderhub requires
+# binderhub requires a requirements.txt file for use with repo2docker.
+# our binder hub instances are run on Linux x86.
 
 echo "This script will export poetry dependencies into requirements.txt used in binder."
 echo "A new temporary virtual environment will be created and subsequently deleted. "
@@ -38,10 +39,10 @@ which python3
 echo "++ Installing dependencies..."
 pip install --upgrade pip
 pip install poetry
-poetry install --with "viz" --without "dev,macOS"
+poetry install --extras="viz" --without="dev"
 
 echo "++ Exporting poetry dependencies to $REQ_FILE..."
-poetry export --without-hashes --with "viz" --without "dev,macOS" --format=requirements.txt > $REQ_FILE
+poetry export --without-hashes --extras="viz" --without="dev" --format=requirements.txt > $REQ_FILE
 
 echo "++ Cleaning up..."
 rm -rf $VENV_DIR

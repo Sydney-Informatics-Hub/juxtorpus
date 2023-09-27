@@ -3800,7 +3800,7 @@ torch = ["torch (>=1.6.0)"]
 name = "thinc-apple-ops"
 version = "0.1.4"
 description = "Improve Thinc's performance on Apple devices with native libraries"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "thinc_apple_ops-0.1.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:ad03f4247f8243164d4faba79aa157899d2a3ab22e2964f01be93a9a889895ee"},
@@ -4263,9 +4263,10 @@ docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.link
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
 
 [extras]
+apple = ["thinc-apple-ops", "urllib3"]
 viz = ["ipywidgets", "matplotlib", "panel", "plotly"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.11"
-content-hash = "52eb2202a5088b60adae8a7ebc399256016b41264f80c25514d3cc5927c92b60"
+content-hash = "133856968ab9fbd63a58792a26d6ab8770f45305b39b5fe115232eba55d8452b"
