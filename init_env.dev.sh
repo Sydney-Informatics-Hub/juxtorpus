@@ -43,6 +43,7 @@ if [[ ${ARCH:u} == ARM* && ${OS:u} == "DARWIN" ]]; then
   poetry install --with "dev,viz,macOS"
 else
   poetry install --with "dev,viz"
+fi
 
 echo "++ Done. Your virtual env is installed at $VENV_DIR"
 echo "To activate your virtual env run: source $VENV_DIR/bin/activate"
