@@ -283,7 +283,7 @@ numpy = {version = ">=1.19.0", markers = "python_version >= \"3.9\""}
 name = "bokeh"
 version = "3.2.2"
 description = "Interactive plots and applications in the browser from Python"
-optional = false
+optional = true
 python-versions = ">=3.9"
 files = [
     {file = "bokeh-3.2.2-py3-none-any.whl", hash = "sha256:e31670a013e1ff15c3d4d04f587c8162c4cc9fe1af507fd741d295e6c4e1225b"},
@@ -1094,7 +1094,7 @@ files = [
 name = "ipywidgets"
 version = "7.8.1"
 description = "IPython HTML widgets for Jupyter"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "ipywidgets-7.8.1-py2.py3-none-any.whl", hash = "sha256:29f7056d368bf0a7b35d51cf0c56b58582da57c78bb9f765965fef7c332e807c"},
@@ -1541,7 +1541,7 @@ files = [
 name = "jupyterlab-widgets"
 version = "1.1.7"
 description = "A JupyterLab extension."
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "jupyterlab_widgets-1.1.7-py3-none-any.whl", hash = "sha256:0c4548cf42032e490447e4180f2c7d49ba5c30b42164992b38fb8c9d56c4e1b2"},
@@ -1679,7 +1679,7 @@ data = ["language-data (>=1.1,<2.0)"]
 name = "linkify-it-py"
 version = "2.0.2"
 description = "Links recognition library with FULL unicode support."
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "linkify-it-py-2.0.2.tar.gz", hash = "sha256:19f3060727842c254c808e99d465c80c49d2c7306788140987a1a7a29b0d6ad2"},
@@ -1699,7 +1699,7 @@ test = ["coverage", "pytest", "pytest-cov"]
 name = "markdown"
 version = "3.4.4"
 description = "Python implementation of John Gruber's Markdown."
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "Markdown-3.4.4-py3-none-any.whl", hash = "sha256:a4c1b65c0957b4bd9e7d86ddc7b3c9868fb9670660f6f99f6d1bca8954d5a941"},
@@ -1717,7 +1717,7 @@ testing = ["coverage", "pyyaml"]
 name = "markdown-it-py"
 version = "3.0.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "markdown-it-py-3.0.0.tar.gz", hash = "sha256:e3f60a94fa066dc52ec76661e37c851cb232d92f9886b15cb560aaada2df8feb"},
@@ -1864,7 +1864,7 @@ traitlets = "*"
 name = "mdit-py-plugins"
 version = "0.4.0"
 description = "Collection of plugins for markdown-it-py"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "mdit_py_plugins-0.4.0-py3-none-any.whl", hash = "sha256:b51b3bb70691f57f974e257e367107857a93b36f322a9e6d44ca5bf28ec2def9"},
@@ -1883,7 +1883,7 @@ testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
 name = "mdurl"
 version = "0.1.2"
 description = "Markdown URL utilities"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
@@ -2327,7 +2327,7 @@ files = [
 name = "panel"
 version = "1.2.3"
 description = "The powerful data exploration & web app framework for Python."
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "panel-1.2.3-py2.py3-none-any.whl", hash = "sha256:0805bacf4a613e8869163bf80f50e59a89838afe76bdbe6a05ab5637f32683f7"},
@@ -2363,7 +2363,7 @@ ui = ["jupyter-server", "playwright", "pytest-playwright"]
 name = "param"
 version = "1.13.0"
 description = "Make your Python code clearer and more reliable by declaring Parameters."
-optional = false
+optional = true
 python-versions = ">=2.7"
 files = [
     {file = "param-1.13.0-py2.py3-none-any.whl", hash = "sha256:a2e3b7b07ca7dd1adaa4fb3020a3ef4fe434f27ede453a9d94194c5155677e30"},
@@ -2523,7 +2523,7 @@ test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4)", "pytest-co
 name = "plotly"
 version = "5.17.0"
 description = "An open-source, interactive data visualization library for Python"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "plotly-5.17.0-py2.py3-none-any.whl", hash = "sha256:7c84cdf11da162423da957bb093287134f2d6f170eb9a74f1459f825892247c3"},
@@ -2937,7 +2937,7 @@ files = [
 name = "pyviz-comms"
 version = "3.0.0"
 description = "A JupyterLab extension for rendering HoloViz content."
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "pyviz_comms-3.0.0-py3-none-any.whl", hash = "sha256:91c967151b1e4d436c458c147a31991a42fbe7567e49176e4eb5b8dc8e20f1ff"},
@@ -3691,7 +3691,7 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 name = "tenacity"
 version = "8.2.3"
 description = "Retry code until it succeeds"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "tenacity-8.2.3-py3-none-any.whl", hash = "sha256:ce510e327a630c9e1beaf17d42e6ffacc88185044ad85cf74c0a8887c6a0f88c"},
@@ -3952,7 +3952,7 @@ files = [
 name = "uc-micro-py"
 version = "1.0.2"
 description = "Micro subset of unicode data files for linkify-it-py projects."
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "uc-micro-py-1.0.2.tar.gz", hash = "sha256:30ae2ac9c49f39ac6dce743bd187fcd2b574b16ca095fa74cd9396795c954c54"},
@@ -4063,7 +4063,7 @@ test = ["websockets"]
 name = "widgetsnbextension"
 version = "3.6.6"
 description = "IPython HTML widgets for Jupyter"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "widgetsnbextension-3.6.6-py2.py3-none-any.whl", hash = "sha256:e7fb9999845affc9024ecfbe0a824dd8e633403d027b28ceadab398b633ad51c"},
@@ -4146,7 +4146,7 @@ pillow = "*"
 name = "xyzservices"
 version = "2023.7.0"
 description = "Source of XYZ tiles providers"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "xyzservices-2023.7.0-py3-none-any.whl", hash = "sha256:88e9cbf22b31a2f9c1b242e2b18690f5c705f0e539c9bfd37a10399e1037731b"},
@@ -4262,7 +4262,10 @@ files = [
 docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (<7.2.5)", "sphinx (>=3.5)", "sphinx-lint"]
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
 
+[extras]
+viz = ["ipywidgets", "matplotlib", "panel", "plotly"]
+
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.11"
-content-hash = "f8a125f9a401b26f87dce0caef7cbb711e20d3e12c42f3d34bac6a615e33bd28"
+content-hash = "52eb2202a5088b60adae8a7ebc399256016b41264f80c25514d3cc5927c92b60"
