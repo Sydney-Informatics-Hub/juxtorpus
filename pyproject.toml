@@ -47,8 +47,8 @@ urllib3 = "^1.26.6"     # ImportError: urllib3 v2.0 only supports OpenSSL 1.1.1+
 
 
 [tool.poetry.extras]
-#viz = ["panel", "matplotlib", "ipywidgets", "plotly"]
-viz = ["viz"]
+viz = ["panel", "matplotlib", "ipywidgets", "plotly"]
+# specifying extras via dependency groups - currently an Open Issue: https://github.com/python-poetry/poetry/issues/4842
 
 
 [build-system]
