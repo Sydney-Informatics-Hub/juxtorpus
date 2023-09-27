@@ -46,8 +46,11 @@ thinc-apple-ops = { extras = ["apple"], version = "^0.1.0", platform = "apple" }
 urllib3 = "^1.26.6"     # ImportError: urllib3 v2.0 only supports OpenSSL 1.1.1+ (Mac ARM architecture)
 
 
+[tool.poetry.extras]
+#viz = ["panel", "matplotlib", "ipywidgets", "plotly"]
+viz = ["viz"]
+
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.setuptools_scm]
