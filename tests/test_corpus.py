@@ -20,7 +20,7 @@ def is_equal(v1, v2):
 
 class TestCorpus(unittest.TestCase):
     def setUp(self) -> None:
-        df = pd.read_csv('tests/assets/Geolocated_places_climate_with_LGA_and_remoteness_0.csv',
+        df = pd.read_csv('tests/assets/test.csv',
                          usecols=['processed_text', 'tweet_lga'])
         self.corpus = Corpus.from_dataframe(df, col_doc='processed_text')
 
@@ -93,7 +93,7 @@ class TestCorpus(unittest.TestCase):
 
     def test_Given_corpus_When_cloned_Then_cloned_custom_dtm_is_valid(self):
         mask, _ = random_mask(self.corpus)
-        _ = self.corpus.create_custom_dtm(lambda text: re.findall(r'@\w+', text))  # function doesn't matter
+        _ = self.corpus.create_custom_dtm(lambda text: re.findall(r'@\w+', text), dtm_id='test')  # function doesn't matter
         clone = self.corpus.cloned(mask)
 
         texts = clone.docs()
