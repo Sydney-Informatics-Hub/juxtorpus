@@ -35,5 +35,6 @@ from .spacy_processor import SpacyProcessor
 def process(corpus, **kwargs):
     if not isinstance(corpus, Corpus): raise ValueError(f"corpus is not an instance of {Corpus.__name__}.")
     if 'nlp' in kwargs.keys():
-        return SpacyProcessor(kwargs.get('nlp'), kwargs.get('source', None)).run(corpus)
+        nlp = kwargs.pop('nlp')
+        return SpacyProcessor(nlp=nlp, source=kwargs.get('source', None)).run(corpus)
     raise ValueError(f"Only SpacyProcessor is supported at the moment. Please supply nlp argument.")

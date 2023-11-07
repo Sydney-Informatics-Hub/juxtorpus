@@ -42,6 +42,8 @@ class DocMeta(Meta):
         texts = (doc.text for i, doc in enumerate(docs) if i < n)
         attrs = (self._get_doc_attr(doc) for i, doc in enumerate(docs) if i < n)
         return pd.DataFrame(zip(texts, attrs), columns=['text', self._id])
+        # ^todo: should have the same index as corpus.
+        #   (not implemented due to branching of pd.Series and Callable in _get_iterable())
 
     def __iter__(self):
         for doc in self._get_iterable():

@@ -18,7 +18,7 @@ class TestCorpusSlicer(unittest.TestCase):
         builder.add_metas(['remote_level'], dtypes='float', lazy=False)
         builder.add_metas(['tweet_lga'], dtypes='category')
         builder.add_metas(['year_month_day'], dtypes='datetime', lazy=False)
-        builder.set_text_column('processed_text')
+        builder.set_document_column('processed_text')
         self.corpus: Corpus = builder.build()
 
     def test_Given_non_existant_meta_When_filter_Then_error_is_raised(self):
@@ -92,6 +92,13 @@ class TestCorpusSlicer(unittest.TestCase):
         groups = self.corpus.slicer.group_by(meta_id)
         assert len(list(groups)) == num_uniqs, "There should be the same number of unique items and groups."
 
+    def test_Given_subcorpus_When_groupby_Then_num_groups_equals_num_uniques(self):
+        meta_id = 'tweet_lga'
+        lga = self.corpus.meta[meta_id].series.value_counts().index[0]
+        subcorpus = self.corpus.slicer.filter_by_item(meta_id, lga)
+        groups = list(subcorpus.slicer.group_by('year_month_day', pd.Grouper(freq='1w')))
+        assert len(groups) == 24, "There should've been 24 weeks in the subcorpus."
+
     def test_groupby_datetime(self):
         groups = list(self.corpus.slicer.group_by('year_month_day', pd.Grouper(freq='1W')))
         assert len(groups) == 127, "There should've been 127 weeks in the sample dataset."
@@ -103,6 +110,7 @@ class TestCorpusSlicer(unittest.TestCase):
             "Depth 1 DTM should have the same number of docs as subcorpus."
 
         # the custom_dtm created should be from root and then sliced to this depth.
+        subcorpus = subcorpus.detached()
         _ = subcorpus.create_custom_dtm(tokeniser_func=lambda text: re.findall(r'#\w+', text))
         subsubcorpus = subcorpus.slicer.filter_by_datetime('year_month_day', start='2019-11-29', end='2020-06-05')
         assert len(subsubcorpus) == subsubcorpus.dtm.num_docs, \
@@ -110,16 +118,16 @@ class TestCorpusSlicer(unittest.TestCase):
 
     def test_Given_meta_When_filter_twice_Then_clone_is_valid(self):
         subcorpus: Corpus = self.corpus.slicer.filter_by_item('remote_level', 2.0)
-        subsubcorpus = subcorpus.slicer.filter_by_item('tweet_lga', 'Eurobodalla (A)')
+        subsubcorpus = subcorpus.slicer.filter_by_item('tweet_lga', 'Bridgetown-Greenbushes (S)')
 
-        assert len(subsubcorpus) == 48, 'Depth 2 corpus should have only 48 documents.'
+        assert len(subsubcorpus) == 4, 'Depth 2 corpus should have only 4 documents.'
 
 
 class TestSpacyCorpusSlicer(unittest.TestCase):
     def setUp(self) -> None:
         df = pd.read_csv('tests/assets/Geolocated_places_climate_with_LGA_and_remoteness_0.csv',
                          usecols=['processed_text', 'tweet_lga'])
-        corpus = Corpus.from_dataframe(df, col_text='processed_text')
+        corpus = Corpus.from_dataframe(df, col_doc='processed_text')
         self.scorpus: SpacyCorpus = SpacyCorpus.from_corpus(corpus, nlp=spacy.blank('en'))
 
     def test_filter_by_matcher(self):
@@ -127,4 +135,4 @@ class TestSpacyCorpusSlicer(unittest.TestCase):
         matcher.add("test", patterns=[[{"TEXT": "@fitzhunter"}]])
 
         subcorpus = self.scorpus.slicer.filter_by_matcher(matcher)
-        assert len(subcorpus) == 12, "There should only be 12 matched document from corpus."
+        assert len(subcorpus) == 10, "There should only be 10 matched document from corpus."

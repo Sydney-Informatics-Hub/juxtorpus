@@ -1,6 +1,7 @@
 from .base import Meta
 from typing import Union
 import pandas as pd
+import numpy as np
 
 from juxtorpus.loader import LazySeries
 from juxtorpus.utils.utils_pandas import subindex_to_mask
@@ -24,6 +25,10 @@ class SeriesMeta(Meta):
         if isinstance(self._series, LazySeries):
             self._series = self._series.load()
         return self._series
+
+    @property
+    def dtype(self):
+        return self.series.dtype
 
     def apply(self, func):
         return self.series.apply(func)
@@ -67,12 +72,18 @@ class SeriesMeta(Meta):
         info['top'] = str(vc.index.values[0])
         info['top_freq'] = vc.values[0]
 
-        uniqs = series.unique()
-        info['uniqs'] = ', '.join(str(u) for u in uniqs)
-        info['num_uniqs'] = len(uniqs)
+        try:
+            uniqs = series.unique()
+            info['uniqs'] = ', '.join(str(u) for u in uniqs)
+            info['num_uniqs'] = len(uniqs)
+        except:
+            pass
 
         # mean, min, max, quantiles
-        if pd.api.types.is_numeric_dtype(series) or pd.api.types.is_datetime64_any_dtype(series):
+        if ((not pd.api.types.is_bool_dtype(series)) and
+                (pd.api.types.is_numeric_dtype(series)
+                 or pd.api.types.is_datetime64_any_dtype(series))
+        ):
             info['mean'] = series.mean()
             info['std'] = series.std()
             info['min'] = series.min()
@@ -81,8 +92,13 @@ class SeriesMeta(Meta):
             info['75%'] = series.quantile(0.75)
             info['max'] = series.max()
 
-        df = pd.DataFrame(info, index=[self.id]).fillna('')
-        return df
+        return pd.DataFrame.from_dict(info, orient='index').T.fillna('').rename(index={0: self.id})
+
+    def astype(self, type_: Union[str, np.dtype, pd.core.dtypes.dtypes.PandasExtensionDtype], strftime=None):
+        if type_ == 'datetime':
+            self._series = pd.to_datetime(self.series, format=strftime).dt.tz_localize(None) # NOTE: timezone-UNaware.
+        else:
+            self._series = self.series.astype(type_)
 
     def _show_uniqs(self, series) -> bool:
         uniqs = series.unique()
@@ -94,6 +110,9 @@ class SeriesMeta(Meta):
     def __repr__(self) -> str:
         prev = super().__repr__()
         return prev[:-2] + f" dtype: {self.series.dtype}]>"
+
+    def __len__(self):
+        return len(self.series)
 
 
 """Example Child Class (Archived): 

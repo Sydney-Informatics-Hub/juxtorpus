@@ -63,6 +63,9 @@ class PolarityWordCloud(Viz):
         self._df_top_tmp = df  # df to generate wordcloud from
         assert sum(map(lambda i: not isinstance(i, str), self._df.index)) == 0, "df index must be strings."
 
+        # checks
+        if self._df[col_polarity].sum() == 0:
+            raise ValueError("The two corpus are perfectly balanced. Polarity Wordcloud will not work.")
 
         # Polarity score: colouring
         self._col_polarity = col_polarity
@@ -134,8 +137,8 @@ class PolarityWordCloud(Viz):
 
     def render(self, height: int = 16, width: int = 16 * 1.5, title: str = ''):
         """ Renders the wordcloud on the screen. """
-        self._build(resolution_scale=int(height * width * 0.005))  # 0.005 was determined after multiple trials.
-        fig, ax = plt.subplots(figsize=(height, width))
+        self._build(resolution_scale=int(height * width * 0.01))  # 0.01 was determined after multiple trials.
+        fig, ax = plt.subplots(figsize=(height/2, width/2))
         ax.imshow(self.wc, interpolation='bilinear')
         ax.axis('off')
         plt.show()

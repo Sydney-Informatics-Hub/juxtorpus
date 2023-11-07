@@ -22,6 +22,8 @@ class Jux:
 
     def __init__(self, corpus_0: _CorpusT, corpus_1: _CorpusT):
         # NOTE: numeric variables are used to maintain consistency with column names in pandas
+        if not isinstance(corpus_0, Corpus) or not isinstance(corpus_1, Corpus):
+            raise ValueError("corpus_0 and corpus_1 must be a Corpus.")
         self._0 = corpus_0
         self._1 = corpus_1
         self._stats = Statistics(self)
@@ -57,7 +59,7 @@ class Jux:
         return [self._0, self._1]
 
     def summary(self):
-        return pd.concat([c.summary().rename(f'corpus_{i}') for i, c in enumerate(self.corpora)], axis=1)
+        return pd.concat([c.summary()[''].rename(c.name) for i, c in enumerate(self.corpora)], axis=1)
 
     @property
     def shares_parent(self) -> bool:
