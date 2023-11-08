@@ -289,7 +289,7 @@ class Corpus(Clonable):
         cdtm = DTM()
         cdtm.initialise(self.docs(), vectorizer=vectoriser)
         if inplace:
-            self._dtm_registry.set_custom_dtm(dtm=cdtm, current_corpus_index=self._df.index)
+            self._dtm_registry.set_custom_dtm(dtm=cdtm, dtm_id='custom', current_corpus_index=self._df.index)
             return self._dtm_registry.get_custom_dtm()
         else:
             return cdtm
