@@ -3,10 +3,13 @@ from abc import ABC
 
 from ipywidgets import Label, Layout, HBox, GridBox, VBox, Button, HTML
 from ipywidgets import Checkbox
-from juxtorpus.viz.style.ipyw import center_style, corpus_id_layout, size_layout, parent_layout, hbox_style
+from juxtorpus.viz.style.ipyw import (
+    center_style, corpus_id_layout, size_layout, parent_layout, download_layout, hbox_style
+)
 from juxtorpus.viz import Widget
 from juxtorpus.viz.widgets.corpus.slicer import SlicerWidget
 from juxtorpus.viz.widgets.corpus.builder import CorpusBuilderFileUploadWidget
+from juxtorpus.viz.widgets.corpus_download import make_download_html_widget_for
 
 import logging
 
@@ -26,7 +29,8 @@ class CorporaWidget(Widget, ABC):
     _corpus_selector_labels = [
         HTML("<b>Corpus</b>", layout=Layout(**corpus_id_layout, **center_style)),
         HTML("<b>Size</b>", layout=Layout(**size_layout, **center_style)),
-        HTML("<b>Parent</b>", layout=Layout(**parent_layout, **center_style))
+        HTML("<b>Parent</b>", layout=Layout(**parent_layout, **center_style)),
+        HTML("<b>Download</b>", layout=Layout(**parent_layout, **center_style))
     ]
 
     def __init__(self, corpora: 'Corpora'):
@@ -69,7 +73,9 @@ class CorporaWidget(Widget, ABC):
         checkbox.add_class('corpus_id_focus_colour')  # todo: add this HTML to code
         return HBox([checkbox,
                      Label(str(len(corpus)), layout=Layout(**size_layout)),
-                     Label(parent_label, layout=Layout(**parent_layout))],
+                     Label(parent_label, layout=Layout(**parent_layout)),
+                     make_download_html_widget_for(corpus=corpus, ext='.xlsx', **{'layout': Layout(**download_layout)}),
+                     ],
                     layout=Layout(**hbox_style))
 
     def _observe_row_checkbox(self, event):
