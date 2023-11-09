@@ -2,7 +2,14 @@
 
 set -e
 
-VENV_DIR="./.venv"
+HELP="./$(basename $0) <venv-name>"
+
+if [[ -z $1 ]]; then
+  echo $HELP >&2
+  exit 1;
+fi
+
+VENV_DIR=$1
 POETRY_FILE="./pyproject.toml"
 REQ_FILE="./requirements.dev.txt"
 
