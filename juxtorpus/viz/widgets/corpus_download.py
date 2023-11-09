@@ -2,43 +2,14 @@
 
 Provides the widget that allows you to download a corpus.
 """
+from pathlib import Path
 
 from juxtorpus.corpus import Corpus
-from IPython.display import FileLink
 import ipywidgets as widgets
-import os
+import html
 
 
-class DownloadFileLink(FileLink):
-    '''
-    Create link to download files in Jupyter Notebook
-    '''
-    html_link_str = "<a href='{link}' download={file_name}>{link_text}</a>"
-
-    def __init__(self, path, file_name=None, link_text=None, *args, **kwargs):
-        super(DownloadFileLink, self).__init__(path, *args, **kwargs)
-
-        self.file_name = file_name or os.path.split(path)[1]
-        self.link_text = link_text or self.file_name
-
-    def _format_path(self):
-        from html import escape
-
-        fp = "".join([self.url_prefix, escape(self.path)])
-        return "".join(
-            [
-                self.result_html_prefix,
-                self.html_link_str.format(
-                    link=fp, file_name=self.file_name, link_text=self.link_text
-                ),
-                self.result_html_suffix,
-            ]
-        )
-
-
-def make_download_btn(corpus: Corpus, ext: str):
-    if ext not in ('.csv', '.xlsx'):
-        raise ValueError("ext must be .csv or .xlsx.")
+def make_download_html_widget_for(corpus: Corpus, ext: str, **kwargs) -> widgets.HTML:
     match ext:
         case '.csv':
             path = f"{corpus.name}.csv"
@@ -46,4 +17,11 @@ def make_download_btn(corpus: Corpus, ext: str):
         case '.xlsx':
             path = f"{corpus.name}.xlsx"
             corpus.to_excel(path)
-    return DownloadFileLink(path)
+        case _:
+            raise ValueError("ext must be .csv or .xlsx.")
+
+    path = Path(path)
+    href = html.escape("./" + path.name)
+    default_fname = path.name
+    return widgets.HTML(f'<a href=/files/{href} download={default_fname}>Download</a>', **kwargs)
+    # note: somehow ipywidget's HTML does not direct href to start from /files but IPython's HTML does.

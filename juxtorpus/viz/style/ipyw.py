@@ -1,9 +1,10 @@
 hbox_style = {'display': 'inline-flex', 'flex_flow': 'row', 'align_items': 'stretch', 'width': '100%'}
 # 'flex' short for: flex-grow, flex-shrink, flex-basis
 center_style = {'display': 'flex', 'justify_content': 'center'}
-corpus_id_layout = {'width': '40%'}
+corpus_id_layout = {'width': '20%'}
 size_layout = {'width': '20%'}
-parent_layout = {'width': '40%'}
+parent_layout = {'width': '30%'}
+download_layout = {'width': '20%'}
 # corpus builder
 f_selector_layout = {'width': '98%', 'height': '100%'}
 f_uploader_layout = {'width': '98%', 'height': '50px'}
