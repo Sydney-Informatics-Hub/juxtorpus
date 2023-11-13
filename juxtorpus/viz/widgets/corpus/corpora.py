@@ -74,9 +74,9 @@ class CorporaWidget(Widget, ABC):
         gen_dl_link_btn = Button(description="Generate Link")
         btn_style = ButtonStyle()
         btn_style.button_color = 'lightblue'
-        btn_style.width = '100px'
-        btn_style.height = '40px'
-        btn_style.font_size = '10px'
+        btn_style.width = '60px'
+        btn_style.height = '15px'
+        btn_style.font_size = '6px'
         gen_dl_link_btn.style = btn_style
 
         download_hbox = HBox([
