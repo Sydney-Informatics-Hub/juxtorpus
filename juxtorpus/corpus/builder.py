@@ -371,8 +371,9 @@ class CorpusBuilder(Widget):
         elif path.suffix in ('.txt'):
             return pd.DataFrame([(data.decode('utf-8'), path.name)], columns=[Corpus.COL_DOC, 'file_name'])
         elif path.suffix == '.zip':
+            dfs = list()
+            meta_df: pd.DataFrame | None = None
             with zipfile.ZipFile(path, 'r') as z:
-                dfs = list()
                 for file in z.filelist:
                     # skip directory files
                     if file.is_dir(): continue
@@ -384,11 +385,34 @@ class CorpusBuilder(Widget):
                     if file.filename.endswith(".zip"):  # zipfile python 3.9 api (no .suffix)
                         logger.warning(f"{file} is a nested zip. Skipped.")
                         continue
-                    # todo: meta data file branching
                     data = z.read(file)
-                    df = self.read((z.filename + '/' + file.filename, data), nrows, usecols=usecols, dtype=dtype, **kwargs)
-                    dfs.append(df)
-            return pd.concat(dfs, axis=0)
+                    if file.filename.endswith(".csv") or file.filename.endswith(".xlsx"):
+                        logger.info(f"Found: metadatafile {file.filename}. Linking col: file_name")
+                        usecols_without_doc = usecols
+                        if usecols is not None:
+                            usecols_without_doc = usecols.copy().difference({"document"})
+                        if meta_df is not None:
+                            raise ValueError("Another metadata file has already been found. You may only have one.")
+                        else:
+                            df = self.read((z.filename + '/' + file.filename, data), nrows,
+                                           usecols=usecols_without_doc,
+                                           dtype=dtype,
+                                           **kwargs)
+                            meta_df = df
+                    else:
+                        df = self.read((z.filename + '/' + file.filename, data), nrows,
+                                       usecols=usecols,
+                                       dtype=dtype,
+                                       **kwargs)
+                        dfs.append(df)
+            if len(dfs) <= 0:
+                raise FileNotFoundError("There are no .txt files in your .zip.")
+            text_dfs = pd.concat(dfs, axis=0)
+            if meta_df is None:
+                return text_dfs
+            else:
+                merged = text_dfs.merge(meta_df, on='file_name', how='left').fillna('')
+                return merged
         else:
             raise NotImplementedError("Only .csv and .xlsx are supported.")
 
