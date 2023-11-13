@@ -373,7 +373,7 @@ class CorpusBuilder(Widget):
         elif path.suffix == '.zip':
             dfs = list()
             meta_df: pd.DataFrame | None = None
-            with zipfile.ZipFile(path, 'r') as z:
+            with (zipfile.ZipFile(path, 'r') as z):
                 for file in z.filelist:
                     # skip directory files
                     if file.is_dir(): continue
@@ -386,7 +386,9 @@ class CorpusBuilder(Widget):
                         logger.warning(f"{file} is a nested zip. Skipped.")
                         continue
                     data = z.read(file)
-                    if file.filename.endswith(".csv") or file.filename.endswith(".xlsx"):
+                    if (file.filename.endswith(".csv")
+                            or file.filename.endswith(".xlsx")
+                            or file.filename.endswith(".xls")):
                         logger.info(f"Found: metadatafile {file.filename}. Linking col: file_name")
                         usecols_without_doc = usecols
                         if usecols is not None:
@@ -411,6 +413,14 @@ class CorpusBuilder(Widget):
             if meta_df is None:
                 return text_dfs
             else:
+                # note: some metadata files may not have .txt extension included as filename. Try to linkage without.
+                if not meta_df['file_name'].apply(lambda fname: str(fname).endswith('.txt')).all():
+                    logger.warning(
+                        "ATTEMPT CORRECTION: Linkage column did not all end with .txt. Will try to link without."
+                    )
+                    text_dfs['file_name'] = text_dfs['file_name'].apply(
+                        lambda fname: str(fname)[:str(fname).rfind('.txt')]
+                    )
                 merged = text_dfs.merge(meta_df, on='file_name', how='left').fillna('')
                 return merged
         else:
