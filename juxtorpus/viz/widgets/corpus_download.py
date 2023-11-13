@@ -23,5 +23,5 @@ def make_download_html_widget_for(corpus: Corpus, ext: str, **kwargs) -> widgets
     path = Path(path)
     href = html.escape("./" + path.name)
     default_fname = path.name
-    return widgets.HTML(f'<a href=/files/{href} download={default_fname}>Download</a>', **kwargs)
+    return widgets.HTML(f'<a href=/files/{href} download={default_fname}>Click to download</a>', **kwargs)
     # note: somehow ipywidget's HTML does not direct href to start from /files but IPython's HTML does.
