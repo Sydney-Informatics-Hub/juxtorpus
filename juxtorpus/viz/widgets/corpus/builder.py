@@ -1,5 +1,5 @@
 from typing import Callable
-from ipywidgets import (SelectMultiple, Layout, Box, HTML, Button, HBox, VBox,
+from ipywidgets import (SelectMultiple, Select, Layout, Box, HTML, Button, HBox, VBox,
                         Output, Text, Label, Dropdown, Checkbox)
 import pandas as pd
 import math
@@ -192,7 +192,7 @@ class CorpusBuilderFileUploadWidget(Widget):
 
     def _create_file_uploader_entrypoint(self):
         """ Creates a selectable FileUploaderWidget. This is the entrypoint. """
-        f_selector = SelectMultiple(layout=Layout(**f_selector_layout))
+        f_selector = Select(layout=Layout(**f_selector_layout))
         fuw = FileUploadWidget()
         fuw._uploader.layout = Layout(**f_uploader_layout)
 
