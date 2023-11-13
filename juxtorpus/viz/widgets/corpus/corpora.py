@@ -1,7 +1,7 @@
 from typing import Optional
 from abc import ABC
 
-from ipywidgets import Label, Layout, HBox, GridBox, VBox, Button, HTML
+from ipywidgets import Label, Layout, HBox, GridBox, VBox, Button, HTML, Box, ButtonStyle
 from ipywidgets import Checkbox
 from juxtorpus.viz.style.ipyw import (
     center_style, corpus_id_layout, size_layout, parent_layout, download_layout, hbox_style
@@ -71,12 +71,35 @@ class CorporaWidget(Widget, ABC):
 
         parent_label = self._parent_label_of(corpus)
         checkbox.add_class('corpus_id_focus_colour')  # todo: add this HTML to code
-        return HBox([checkbox,
+        gen_dl_link_btn = Button(description="Generate Link")
+        btn_style = ButtonStyle()
+        btn_style.button_color = 'lightblue'
+        btn_style.width = '100px'
+        btn_style.height = '40px'
+        btn_style.font_size = '10px'
+        gen_dl_link_btn.style = btn_style
+
+        download_hbox = HBox([
+            gen_dl_link_btn,
+            Box()
+        ], layout=Layout(**download_layout))
+
+        def on_generate_download_link(_):
+            download_hbox.children = (
+                gen_dl_link_btn,
+                make_download_html_widget_for(corpus, ext='.xlsx')
+            )
+
+        gen_dl_link_btn.on_click(on_generate_download_link)
+
+        hbox = HBox([checkbox,
                      Label(str(len(corpus)), layout=Layout(**size_layout)),
                      Label(parent_label, layout=Layout(**parent_layout)),
-                     make_download_html_widget_for(corpus=corpus, ext='.xlsx', **{'layout': Layout(**download_layout)}),
+                     download_hbox,
                      ],
                     layout=Layout(**hbox_style))
+
+        return hbox
 
     def _observe_row_checkbox(self, event):
         value, owner = event.get('new'), event.get('owner')
