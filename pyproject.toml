@@ -48,6 +48,7 @@ coolname = "^2.2.0"
 
 
 #spacytextblob = "^4.0.0"
+xlrd = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
 jupyterlab = "^3.6"

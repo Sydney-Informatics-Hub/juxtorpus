@@ -1,5 +1,5 @@
 from typing import Callable
-from ipywidgets import (SelectMultiple, Layout, Box, HTML, Button, HBox, VBox,
+from ipywidgets import (SelectMultiple, Select, Layout, Box, HTML, Button, HBox, VBox,
                         Output, Text, Label, Dropdown, Checkbox)
 import pandas as pd
 import math
@@ -163,6 +163,10 @@ class CorpusBuilderWidget(Widget):
         self._on_build_callback = callback
 
 
+ONUPLOAD_IF_ZIP_INSTRUCTIONS: str = ("If your zipfile has a metadata sheet, "
+                                     "please ensure 'file_name' is used as the linkage column.")
+
+
 class CorpusBuilderFileUploadWidget(Widget):
     """ CorpusBuilderWidget
     Workflow:
@@ -192,7 +196,7 @@ class CorpusBuilderFileUploadWidget(Widget):
 
     def _create_file_uploader_entrypoint(self):
         """ Creates a selectable FileUploaderWidget. This is the entrypoint. """
-        f_selector = SelectMultiple(layout=Layout(**f_selector_layout))
+        f_selector = Select(layout=Layout(**f_selector_layout))
         fuw = FileUploadWidget()
         fuw._uploader.layout = Layout(**f_uploader_layout)
 
@@ -202,7 +206,7 @@ class CorpusBuilderFileUploadWidget(Widget):
 
         fuw.set_callback(_callback_fileupload_to_fileselector)
 
-        box_file_stats = Box(layout=Layout(**box_df_layout))
+        box_file_stats = VBox(layout=Layout(**box_df_layout))
 
         @debounce(0.3)
         def _observe_file_selected(event):
@@ -218,11 +222,23 @@ class CorpusBuilderFileUploadWidget(Widget):
                     size = format_size(d.get('path').stat().st_size)
                     df_list.append((name, size))
             df = pd.DataFrame(df_list, columns=['name', 'size'])
-            box_file_stats.children = (HTML(df.to_html(index=False, classes='table')),)
 
-        f_selector.observe(_observe_file_selected, names='value')
+            is_zip = False
+            for name in df.loc[:, 'name']:
+                if name.endswith('.zip'):
+                    is_zip = True
+            if is_zip:
+                box_file_stats.children = (HTML(df.to_html(index=False, classes='table')),
+                                           HTML(
+                                               f"<span> {ONUPLOAD_IF_ZIP_INSTRUCTIONS} </span>"
+                                           ))
+            else:
+                box_file_stats.children = (HTML(df.to_html(index=False, classes='table')),)
+
         button_confirm = Button(description='Confirm',
                                 layout=Layout(width='20%', height='50px'))
+        f_selector.observe(_observe_file_selected, names='value')
+
         hbox_uploader = HBox([VBox([f_selector, fuw.widget()], layout=Layout(width='50%', height='200px')),
                               VBox([box_file_stats, button_confirm], layout=Layout(width='50%', height='200px'))],
                              layout=Layout(width='100%', height='100%'))
