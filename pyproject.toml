@@ -12,9 +12,9 @@ pyarrow = "^9.0.0"      # pandas memory efficient dep for str
 frozendict = "^2.3.4"
 openpyxl = "^3.1.1"
 # spacy
-spacy = "^v3.4.1"
+spacy = ">=3.4.0,<3.5.0"
 thinc-apple-ops = { extras = ["apple"], version = "^0.1.0", platform = "apple" }
-#en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.4.0/en_core_web_sm-3.4.0-py3-none-any.whl" }
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.4.0/en_core_web_sm-3.4.0-py3-none-any.whl" }
 # ipywidget
 ipywidgets = "^7.7.2"    # 8.x.x latest - backwards compatibility kept for FileUpload widget
 # algos

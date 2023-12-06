@@ -121,5 +121,11 @@ class SpacyCorpusSlicer(CorpusSlicer, ABC):
         cloned = self.corpus.cloned(mask)
 
         meta_series = pd.Series(op.retrieve_matched(), index=mask.index)[mask]
-        cloned.add_meta(SeriesMeta('_matched', meta_series))
-        return cloned
+        name = '_matched'
+        idx = 1
+        while True:
+            try:
+                cloned.add_meta(SeriesMeta(name, meta_series))
+                return cloned
+            except ValueError as _:
+                name = name + "_" + str(idx)
