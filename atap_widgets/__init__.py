@@ -1,1 +1,0 @@
-"""atap_widgets."""
