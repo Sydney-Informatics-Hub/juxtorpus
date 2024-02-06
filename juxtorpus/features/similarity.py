@@ -116,31 +116,3 @@ class Similarity(object):
             seriess.append(ft.series.rename(CORPUS_ID_COL_NAME_FORMAT.format(ft.name, i)))
         res = pd.concat(seriess, axis=1).fillna(0)
         return _cos_sim(res.iloc[:, 0], res.iloc[:, 1])
-
-
-if __name__ == '__main__':
-    import pandas as pd
-    from juxtorpus.corpus import CorpusSlicer
-    from juxtorpus.jux import Jux
-
-    corpus = Corpus.from_dataframe(
-        pd.read_csv('./tests/assets/Geolocated_places_climate_with_LGA_and_remoteness_0.csv',
-                    usecols=['processed_text', 'tweet_lga']),
-        # pd.read_csv('~/Downloads/Geolocated_places_climate_with_LGA_and_remoteness.csv',
-        #             usecols=['processed_text', 'tweet_lga']),
-        col_doc='processed_text'
-    )
-
-    slicer = CorpusSlicer(corpus)
-    brisbane = slicer.filter_by_item('tweet_lga', 'Brisbane (C)')
-    fairfield = slicer.filter_by_item('tweet_lga', 'Fairfield (C)')
-
-    sim = Jux(brisbane, fairfield).sim
-    pairwise = sim.lsa_pairwise_cosine(n_components=100, verbose=True)
-    print(f"SVD pairwise cosine of PCs\n{pairwise}")
-    jaccard = sim.jaccard()
-    print(f"{jaccard=}")
-
-    sw = ENGLISH_STOP_WORDS
-    term_vec_cos = sim.cosine_similarity(metric='tf', without=sw + ['climate', 'tweet', 'https'])
-    print(f"{term_vec_cos=}")

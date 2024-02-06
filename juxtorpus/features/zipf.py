@@ -79,29 +79,3 @@ class Zipf(Viz):
         df[col_proportions] = df.loc[:, 'freq'].apply(lambda c: c / max_freq)
         df[col_zipf] = [1 / i for i in range(1, len(df) + 1)]
         return df
-
-
-if __name__ == '__main__':
-    from pathlib import Path
-    from juxtorpus.corpus import CorpusBuilder
-
-    builder = CorpusBuilder(Path('./tests/assets/Geolocated_places_climate_with_LGA_and_remoteness_0.csv'))
-    builder.set_document_column('processed_text')
-    builder.set_nrows(100)
-    corpus = builder.build()
-
-    # optional - processed by spacy to use spacy matcher
-    from juxtorpus.corpus.processors import SpacyProcessor
-    import spacy
-
-    nlp = spacy.blank('en')
-    spacy_processor = SpacyProcessor(nlp)
-    corpus = spacy_processor.run(corpus)
-
-    zipf = Zipf(corpus)
-    zipf.set_top(30)
-    zipf.render()
-
-    # temporarily remove words
-    with zipf.remove_words(['the', 'to', 'of', 'a', 'is', 'and', 'you']) as zipff:
-        zipff.render()

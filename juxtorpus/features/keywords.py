@@ -12,7 +12,6 @@ import numpy as np
 
 from juxtorpus.corpus import Corpus, SpacyCorpus
 from juxtorpus.matchers import no_stopwords, is_word, no_puncs_no_stopwords
-from juxtorpus.corpus.processors import SpacyProcessor
 
 
 class Keywords(metaclass=ABCMeta):
@@ -178,43 +177,3 @@ class TFKeywords(Keywords):
                 yield span.lemma_.lower()
             else:
                 yield span.text.lower()
-
-
-if __name__ == '__main__':
-    from juxtorpus.corpus import Corpus, CorpusBuilder
-    import re
-
-    tweet_wrapper = re.compile(r'([ ]?<[/]?TWEET>[ ]?)')
-
-    builder = CorpusBuilder('/Users/hcha9747/Downloads/Geolocated_places_climate_with_LGA_and_remoteness_with_text.csv')
-    builder.set_document_column('text')
-    builder.set_nrows(10)
-    builder.set_text_preprocessors([lambda text: tweet_wrapper.sub('', text)])
-    corpus = builder.build()
-
-    from juxtorpus.corpus.processors import SpacyProcessor
-    import spacy
-
-    nlp = spacy.load('en_core_web_sm')
-    spacy_processor = SpacyProcessor(nlp)
-    corpus = spacy_processor.run(corpus)
-
-    # TF Keywords
-    tf = TFKeywords(corpus)
-    tf.set_max_term_freq_per_doc(3).normalise().log_freqs(False)
-    tf.set_df_range(0.01, 0.5)
-    print('\n'.join((str(x) for x in tf.extracted()[:10])))
-    print('\n'.join((str(x) for x in tf.filtered().items())))
-
-    tf = TFKeywords(corpus)
-    tf.set_max_term_freq_per_doc(3).normalise().log_freqs(False).use_lemmas(True)
-    lemmas = tf.extracted()[:10]
-    tf.set_max_term_freq_per_doc(3).normalise().log_freqs(False).use_lemmas(False)
-    no_lemmas = tf.extracted()[:10]
-
-    import pandas as pd
-
-    print(pd.concat([pd.DataFrame(lemmas, columns=['lemmas', 'score']),
-                     pd.DataFrame(no_lemmas, columns=['not_lemma', 'score'])], axis=1))
-
-    print()

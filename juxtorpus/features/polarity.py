@@ -19,7 +19,7 @@ from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
-from juxtorpus.corpus.dtm import DTM
+from atap_corpus.parts.dtm import DTM
 from juxtorpus.viz.polarity_wordcloud import PolarityWordCloud
 
 if TYPE_CHECKING:
@@ -97,7 +97,7 @@ class Polarity(object):
         height, width = 24, 24
         pwc, add_legend = polarity_wordcloud_func(top, colours, tokeniser_func, stopwords, **kwargs)
         pwc._build(resolution_scale=int(height * width * 0.005))
-        fig, ax = plt.subplots(figsize=(height/2, width/2))
+        fig, ax = plt.subplots(figsize=(height / 2, width / 2))
 
         names = self._jux().corpus_0.name, self._jux().corpus_1.name
         legend_elements = [Patch(facecolor=colours[0], label=names[0]), Patch(facecolor=colours[1], label=names[1])]
