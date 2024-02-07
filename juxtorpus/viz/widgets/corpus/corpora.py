@@ -66,7 +66,7 @@ class CorporaWidget(Widget, ABC):
         checkbox.observe(self._observe_row_checkbox, names='value')
 
         corpus = self.corpora.get(name)
-        if not corpus:
+        if corpus is None:
             raise RuntimeError(f"Corpus: {name} does not exist. This should not happen.")
 
         parent_label = self._parent_label_of(corpus)
