@@ -44,17 +44,22 @@ class Polarity(object):
             'log_likelihood': self._wordcloud_log_likelihood
         }
 
-    def tf(self, tokeniser_func: Optional = None, lower=True):
+    def tf(self, dtm_names: tuple[str, str]) -> pd.DataFrame:
         """ Uses the term frequency to produce the polarity score.
 
         Polarity = Corpus 0's tf - Corpus 1's tf.
         """
-        dtms = self._selected_dtms(tokeniser_func, lower=lower)
-        fts = (dtm.freq_table() for dtm in dtms)
+        jux = self._jux()
+        corp_0, corp_1 = jux.corpus_0, jux.corpus_1
+        dtm_0, dtm_1 = dtm_names
+        dtm_0: DTM = corp_0.get_dtm(dtm_0)
+        dtm_1: DTM = corp_1.get_dtm(dtm_1)
 
-        renamed_ft = [(f"{ft.name}_corpus_{i}", ft) for i, ft in enumerate(fts)]
-        df = pd.concat([ft.series.rename(name) / ft.total for name, ft in renamed_ft], axis=1).fillna(0)
-        df['polarity'] = df[renamed_ft[0][0]] - df[renamed_ft[1][0]]
+        df: pd.DataFrame = pd.concat([
+            pd.Series(dtm_0.terms_vector, index=dtm_0.terms, name=f'{corp_0}_ftable'),
+            pd.Series(dtm_1.terms_vector, index=dtm_1.terms, name=f'{corp_1}_ftable')
+        ], axis=1).fillna(0)
+        df['polarity'] = df[f"{corp_0}_ftable"] - df[f"{corp_0}_ftable"]
         return df
 
     def tfidf(self, tokeniser_func: Optional = None, lower=True):
