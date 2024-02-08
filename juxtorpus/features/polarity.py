@@ -13,6 +13,8 @@ Output:
 
 from typing import TYPE_CHECKING, Optional, Callable
 import weakref as wr
+
+import numpy as np
 import pandas as pd
 from typing import Generator
 from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS
@@ -62,22 +64,38 @@ class Polarity(object):
         dtm_1: DTM = corp_1.get_dtm(dtm_1)
 
         df: pd.DataFrame = pd.concat([
-            pd.Series(dtm_0.terms_vector, index=dtm_0.terms, name=f'{corp_0}_ftable'),
-            pd.Series(dtm_1.terms_vector, index=dtm_1.terms, name=f'{corp_1}_ftable')
+            pd.Series(dtm_0.terms_vector, index=dtm_0.terms, name=f'{corp_0.name}_tf'),
+            pd.Series(dtm_1.terms_vector, index=dtm_1.terms, name=f'{corp_1.name}_tf')
         ], axis=1).fillna(0)
-        df['polarity'] = df[f"{corp_0}_ftable"] - df[f"{corp_0}_ftable"]
+        df['polarity'] = df[f"{corp_0.name}_tf"] - df[f"{corp_1.name}_tf"]
         return df
 
-    def tfidf(self, tokeniser_func: Optional = None, lower=True):
+    def tfidf(self, dtm_names: tuple[str, str] | str):
         """ Uses the tfidf scores to produce the polarity score.
 
         Polarity = Corpus 0's tfidf - Corpus 1's tfidf.
         """
-        dtms = self._selected_dtms(tokeniser_func, lower=lower)
-        fts = (dtm.freq_table() for dtm in dtms)
-        renamed_ft = [(f"{ft.name}_corpus_{i}", ft) for i, ft in enumerate(fts)]
-        df = pd.concat([ft.series.rename(name) / ft.total for name, ft in renamed_ft], axis=1).fillna(0)
-        df['polarity'] = df[renamed_ft[0][0]] - df[renamed_ft[1][0]]
+        jux = self._jux()
+        corp_0, corp_1 = jux.corpus_0, jux.corpus_1
+        if isinstance(dtm_names, tuple):
+            dtm_0, dtm_1 = dtm_names
+        elif isinstance(dtm_names, str):
+            dtm_0, dtm_1 = dtm_names, dtm_names
+        else:
+            raise TypeError("dtm_names must be either tuple[str, str] or str.")
+
+        dtm_0: DTM = corp_0.get_dtm(dtm_0)
+        dtm_1: DTM = corp_1.get_dtm(dtm_1)
+
+        df: pd.DataFrame = pd.concat([
+            pd.Series(dtm_0.terms_vector, index=dtm_0.terms, name=f'{corp_0.name}_tf'),
+            pd.Series(dtm_1.terms_vector, index=dtm_1.terms, name=f'{corp_1.name}_tf'),
+            pd.Series(np.minimum(dtm_0.matrix.toarray(), 1).sum(axis=0), index=dtm_0.terms, name=f'{corp_0.name}_idf'),
+            pd.Series(np.minimum(dtm_1.matrix.toarray(), 1).sum(axis=0), index=dtm_1.terms, name=f'{corp_1.name}_idf'),
+        ], axis=1).fillna(0)
+        df[f'{corp_0.name}_tfidf'] = df[f'{corp_0.name}_tf'] / df[f'{corp_0.name}_idf']
+        df[f'{corp_1.name}_tfidf'] = df[f'{corp_1.name}_tf'] / df[f'{corp_1.name}_idf']
+        df['polarity'] = df[f'{corp_0.name}_tfidf'] - df[f'{corp_1.name}_tfidf']
         return df
 
     def log_likelihood(self, tokeniser_func: Optional = None):
