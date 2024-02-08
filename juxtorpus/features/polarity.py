@@ -44,14 +44,20 @@ class Polarity(object):
             'log_likelihood': self._wordcloud_log_likelihood
         }
 
-    def tf(self, dtm_names: tuple[str, str]) -> pd.DataFrame:
+    def tf(self, dtm_names: tuple[str, str] | str) -> pd.DataFrame:
         """ Uses the term frequency to produce the polarity score.
 
         Polarity = Corpus 0's tf - Corpus 1's tf.
         """
         jux = self._jux()
         corp_0, corp_1 = jux.corpus_0, jux.corpus_1
-        dtm_0, dtm_1 = dtm_names
+        if isinstance(dtm_names, tuple):
+            dtm_0, dtm_1 = dtm_names
+        elif isinstance(dtm_names, str):
+            dtm_0, dtm_1 = dtm_names, dtm_names
+        else:
+            raise TypeError("dtm_names must be either tuple[str, str] or str.")
+
         dtm_0: DTM = corp_0.get_dtm(dtm_0)
         dtm_1: DTM = corp_1.get_dtm(dtm_1)
 
