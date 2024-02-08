@@ -17,6 +17,7 @@ plotly = "^5.11.0"
 wordcloud = "^1.8.2.2"
 pyldavis = "^3.4.0"   # from 3.4.1 onwards - requires pandas >= 2.0
 atap-corpus = "^0.1.10"
+atap-corpus-loader = "^1.0.2"
 
 
 [tool.poetry.dev-dependencies]
