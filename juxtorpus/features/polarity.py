@@ -90,11 +90,11 @@ class Polarity(object):
         df: pd.DataFrame = pd.concat([
             pd.Series(dtm_0.terms_vector, index=dtm_0.terms, name=f'{corp_0.name}_tf'),
             pd.Series(dtm_1.terms_vector, index=dtm_1.terms, name=f'{corp_1.name}_tf'),
-            pd.Series(np.minimum(dtm_0.matrix.toarray(), 1).sum(axis=0), index=dtm_0.terms, name=f'{corp_0.name}_idf'),
-            pd.Series(np.minimum(dtm_1.matrix.toarray(), 1).sum(axis=0), index=dtm_1.terms, name=f'{corp_1.name}_idf'),
+            pd.Series(np.minimum(dtm_0.matrix.toarray(), 1).sum(axis=0), index=dtm_0.terms, name=f'{corp_0.name}_df'),
+            pd.Series(np.minimum(dtm_1.matrix.toarray(), 1).sum(axis=0), index=dtm_1.terms, name=f'{corp_1.name}_df'),
         ], axis=1).fillna(0)
-        df[f'{corp_0.name}_tfidf'] = df[f'{corp_0.name}_tf'] / df[f'{corp_0.name}_idf']
-        df[f'{corp_1.name}_tfidf'] = df[f'{corp_1.name}_tf'] / df[f'{corp_1.name}_idf']
+        df[f'{corp_0.name}_tfidf'] = df[f'{corp_0.name}_tf'] / df[f'{corp_0.name}_df']
+        df[f'{corp_1.name}_tfidf'] = df[f'{corp_1.name}_tf'] / df[f'{corp_1.name}_df']
         df['polarity'] = df[f'{corp_0.name}_tfidf'] - df[f'{corp_1.name}_tfidf']
         return df
 
@@ -115,8 +115,8 @@ class Polarity(object):
         else:
             return (corpus.dtm for corpus in self._jux().corpora)
 
-    def wordcloud(self, metric: str, top: int = 50, colours=('blue', 'red'), stopwords: list[str] = None,
-                  tokeniser_func: Optional[Callable] = None, **kwargs):
+    def wordcloud(self, dtm_names: tuple[str, str] | str, metric: str, top: int = 50, colours=('blue', 'red'),
+                  stopwords: list[str] = None, **kwargs):
         """ Generate a wordcloud using one of the 3 modes tf, tfidf, log_likelihood. """
         polarity_wordcloud_func = self.metrics.get(metric, None)
         if polarity_wordcloud_func is None:
@@ -124,7 +124,7 @@ class Polarity(object):
         assert len(colours) == 2, "There can only be 2 colours. e.g. ('blue', 'red')."
 
         height, width = 24, 24
-        pwc, add_legend = polarity_wordcloud_func(top, colours, tokeniser_func, stopwords, **kwargs)
+        pwc, add_legend = polarity_wordcloud_func(dtm_names, top, colours, stopwords, **kwargs)
         pwc._build(resolution_scale=int(height * width * 0.005))
         fig, ax = plt.subplots(figsize=(height / 2, width / 2))
 
@@ -138,15 +138,18 @@ class Polarity(object):
         plt.tight_layout()  # Adjust the layout to prevent overlapping
         plt.show()
 
-    def _wordcloud_tf(self, top: int, colours: tuple[str], tokeniser_func, stopwords: list[str] = None, **kwargs):
+    def _wordcloud_tf(self, dtm_names: tuple[str, str] | str, top: int, colours: tuple[str],
+                      stopwords: list[str] = None, **kwargs):
         assert len(colours) == 2, "Only supports 2 colours."
         if stopwords is None: stopwords = list()
         sw = stopwords
         sw.extend(ENGLISH_STOP_WORDS)
 
-        df = self.tf(tokeniser_func, **kwargs)
+        corp_0, corp_1 = self._jux().corpus_0, self._jux().corpus_1
+
+        df = self.tf(dtm_names, **kwargs)
         df = df[~df.index.isin(sw)]
-        df['summed'] = df['freq_corpus_0'] + df['freq_corpus_1']
+        df['summed'] = df[f'{corp_0.name}_tf'] + df[f'{corp_1.name}_tf']
         df['polarity_div_summed'] = df['polarity'].abs() / df['summed']
 
         df_tmp = df.sort_values(by='summed', ascending=False).iloc[:top]
@@ -159,15 +162,18 @@ class Polarity(object):
                       Patch(facecolor='None', label='Translucent: Similar frequency'), ]
         return pwc, add_legend
 
-    def _wordcloud_tfidf(self, top: int, colours: tuple[str], tokeniser_func, stopwords: list[str] = None, **kwargs):
+    def _wordcloud_tfidf(self, dtm_names: tuple[str, str] | str, top: int, colours: tuple[str],
+                         stopwords: list[str] = None, **kwargs):
         assert len(colours) == 2, "Only supports 2 colours."
-        if stopwords is None: stopwords = list()
-        sw = stopwords
-        sw.extend(ENGLISH_STOP_WORDS)
+        if stopwords is None:
+            sw = list(ENGLISH_STOP_WORDS)
+        else:
+            sw = stopwords
 
-        df = self.tfidf(tokeniser_func, **kwargs)
-        df['size'] = df.polarity.abs()
+        df = self.tfidf(dtm_names, **kwargs)
+        df['size'] = df['polarity'].abs()
         df = df[~df.index.isin(sw)]
+        df = df[df['polarity'].notna()]
         df_tmp = df.sort_values(by='size', ascending=False).iloc[:top]
         pwc = PolarityWordCloud(df_tmp, col_polarity='polarity', col_size='size')
         pwc.gradate(colours[0], colours[1])
@@ -177,7 +183,7 @@ class Polarity(object):
                       Patch(facecolor='None', label='Translucent: Similar tfidf')]
         return pwc, add_legend
 
-    def _wordcloud_log_likelihood(self, top: int, colours: tuple[str], tokeniser_func,
+    def _wordcloud_log_likelihood(self, dtm_names: tuple[str, str] | str, top: int, colours: tuple[str], tokeniser_func,
                                   stopwords: list[str] = None,
                                   **kwargs):
         assert len(colours) == 2, "Only supports 2 colours."
@@ -186,7 +192,7 @@ class Polarity(object):
         sw.extend(ENGLISH_STOP_WORDS)
 
         df = self.log_likelihood(tokeniser_func)
-        tf_df = self.tf()
+        tf_df = self.tf(dtm_names)
         df['summed'] = tf_df['freq_corpus_0'] + tf_df['freq_corpus_1']
         df['polarity_div_summed'] = df['polarity'].abs() / df['summed']
         df = df[~df.index.isin(sw)]
