@@ -1,8 +1,8 @@
 from atap_corpus import Corpus
-from juxtorpus.stats import Statistics
-from juxtorpus.features.similarity import Similarity
-from juxtorpus.features.keywords import TFKeywords, TFIDFKeywords
+# from juxtorpus.stats import Statistics
+# from juxtorpus.features.keywords import TFKeywords, TFIDFKeywords
 from juxtorpus.features.polarity import Polarity
+from juxtorpus.features.similarity import Similarity
 
 import numpy as np
 
@@ -22,14 +22,14 @@ class Jux:
             raise ValueError("corpus_0 and corpus_1 must be a Corpus.")
         self._0 = corpus_0
         self._1 = corpus_1
-        self._stats = Statistics(self)
+        # self._stats = Statistics(self)
         self._sim = Similarity(self)
         self._polarity = Polarity(self)
 
-    @property
-    def stats(self):
-        return self._stats
-
+    # @property
+    # def stats(self):
+    #     return self._stats
+    #
     @property
     def sim(self):
         return self._sim
