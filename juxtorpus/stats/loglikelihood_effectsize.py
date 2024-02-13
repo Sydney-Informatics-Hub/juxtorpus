@@ -7,24 +7,31 @@ source: https://ucrel.lancs.ac.uk/llwizard.html
 import numpy as np
 import pandas as pd
 
-from juxtorpus.corpus import Corpus
-from juxtorpus.corpus.freqtable import FreqTable
 
+def log_likelihood_and_effect_size(freq_tables: list[pd.Series] | pd.DataFrame):
+    """ Calculate the sum of log likelihood ratios frequency tables. """
+    res: pd.DataFrame
+    if isinstance(freq_tables, list):
+        res = pd.concat([ft for ft in freq_tables], axis=1).fillna(0)
+    else:
+        res = freq_tables
 
-def log_likelihood_and_effect_size(freq_tables: list[FreqTable]):
-    """ Calculate the sum of log likelihood ratios over the corpora. """
-    # res = pd.concat((corpus.dtm.freq_table(nonzero=True).df for corpus in corpora), axis=1)
-    res = pd.concat((ft.series.rename(f"{ft.name}_corpus_{i}") for i, ft in enumerate(freq_tables)), axis=1)
-
+    # res = pd.concat((ft.series.rename(f"{ft.name}_corpus_{i}") for i, ft in enumerate(freq_tables)), axis=1)
     corpora_freqs = res.sum(axis=1)
     corpora_freqs_total = corpora_freqs.sum(axis=0)
     res['expected_likelihoods'] = corpora_freqs / corpora_freqs_total
 
-    for i, ftable in enumerate(freq_tables):
-        observed = res[f"{ftable.name}_corpus_{i}"]
+    for i, col in enumerate(res.columns):
+        observed = res[col]
         res[f"expected_freq_corpus_{i}"] = res['expected_likelihoods'] * observed.sum(axis=0)
         res[f"log_likelihood_ratio_corpus_{i}"] = _loglikelihood_ratios(res[f"expected_freq_corpus_{i}"], observed)
         res[f"log_likelihood_corpus_{i}"] = _weighted_log_likehood_ratios(res[f"expected_freq_corpus_{i}"], observed)
+
+    # for i, ftable in enumerate(freq_tables):
+    #     observed = res[f"{ftable.name}_corpus_{i}"]
+    #     res[f"expected_freq_corpus_{i}"] = res['expected_likelihoods'] * observed.sum(axis=0)
+    #     res[f"log_likelihood_ratio_corpus_{i}"] = _loglikelihood_ratios(res[f"expected_freq_corpus_{i}"], observed)
+    #     res[f"log_likelihood_corpus_{i}"] = _weighted_log_likehood_ratios(res[f"expected_freq_corpus_{i}"], observed)
 
     res['log_likelihood_llv'] = res.filter(regex=r'log_likelihood_corpus_[0-9]+').sum(axis=1)
     res['bayes_factor_bic'] = _bayes_factor_bic(len(freq_tables), corpora_freqs_total, res['log_likelihood_llv'])

@@ -1,14 +1,10 @@
-from juxtorpus.corpus import Corpus
-from juxtorpus.stats import Statistics
-from juxtorpus.features.similarity import Similarity
-from juxtorpus.features.keywords import TFKeywords, TFIDFKeywords
+from atap_corpus import Corpus
+# from juxtorpus.features.keywords import TFKeywords, TFIDFKeywords
 from juxtorpus.features.polarity import Polarity
+from juxtorpus.features.similarity import Similarity
+from juxtorpus.stats import Statistics
 
 import numpy as np
-import pandas as pd
-from typing import TypeVar
-
-_CorpusT = TypeVar('_CorpusT', bound=Corpus)  # Corpus subclass
 
 
 class Jux:
@@ -20,7 +16,7 @@ class Jux:
     for your own further analysis.
     """
 
-    def __init__(self, corpus_0: _CorpusT, corpus_1: _CorpusT):
+    def __init__(self, corpus_0: Corpus, corpus_1: Corpus):
         # NOTE: numeric variables are used to maintain consistency with column names in pandas
         if not isinstance(corpus_0, Corpus) or not isinstance(corpus_1, Corpus):
             raise ValueError("corpus_0 and corpus_1 must be a Corpus.")
@@ -57,13 +53,6 @@ class Jux:
     @property
     def corpora(self):
         return [self._0, self._1]
-
-    def summary(self):
-        return pd.concat([c.summary()[''].rename(c.name) for i, c in enumerate(self.corpora)], axis=1)
-
-    @property
-    def shares_parent(self) -> bool:
-        return self._0.find_root() is self._1.find_root()
 
     def keywords(self, method: str):
         """ Extract and return the keywords of the two corpus ranked by frequency. """
