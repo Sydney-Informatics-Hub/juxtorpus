@@ -1,12 +1,14 @@
 [tool.poetry]
 name = "juxtorpus"
 version = "0.2.1"
-description = "Juxtorpus is a corpus exploration tool used to compare and contrast corpus. Widgets enabled."
+description = "Juxtorpus compare and contrast two ATAP corpus."
 authors = ["jack <huen.chan@sydney.edu.au>"]
 readme = "README.md"
+homepage = "https://github.com/Sydney-Informatics-Hub/juxtorpus"
+repository = "https://github.com/Sydney-Informatics-Hub/juxtorpus"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = ">=3.10,<3.12"
 ipywidgets = "^7.7.2"    # 8.x.x latest - backwards compatibility kept for FileUpload widget
 colorlog = "^6.7.0"
 
