@@ -8,7 +8,7 @@ homepage = "https://github.com/Sydney-Informatics-Hub/juxtorpus"
 repository = "https://github.com/Sydney-Informatics-Hub/juxtorpus"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = ">=3.10,<3.13"
 ipywidgets = "^7.7.2"    # 8.x.x latest - backwards compatibility kept for FileUpload widget
 colorlog = "^6.7.0"
 
