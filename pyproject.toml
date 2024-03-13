@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "juxtorpus"
-version = "0.2.1"
+version = "0.2.2"
 description = "Juxtorpus compare and contrast two ATAP corpus."
 authors = ["jack <huen.chan@sydney.edu.au>"]
 readme = "README.md"
@@ -20,6 +20,7 @@ wordcloud = "^1.8.2.2"
 pyldavis = "^3.4.0"   # from 3.4.1 onwards - requires pandas >= 2.0
 atap-corpus = "^0.1.12"
 atap-corpus-loader = "^1.0.2"
+
 
 
 [tool.poetry.dev-dependencies]
