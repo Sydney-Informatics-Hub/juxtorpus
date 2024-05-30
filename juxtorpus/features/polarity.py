@@ -116,7 +116,7 @@ class Polarity(object):
             return (corpus.dtm for corpus in self._jux().corpora)
 
     def wordcloud(self, dtm_names: tuple[str, str] | str, metric: str, top: int = 50, colours=('blue', 'red'),
-                  stopwords: list[str] = None, **kwargs):
+                  stopwords: list[str] = None, return_wc: bool = False, **kwargs):
         """ Generate a wordcloud using one of the 3 modes tf, tfidf, log_likelihood. """
         polarity_wordcloud_func = self.metrics.get(metric, None)
         if polarity_wordcloud_func is None:
@@ -126,8 +126,10 @@ class Polarity(object):
         height, width = 24, 24
         pwc, add_legend = polarity_wordcloud_func(dtm_names, top, colours, stopwords, **kwargs)
         pwc._build(resolution_scale=int(height * width * 0.005))
-        fig, ax = plt.subplots(figsize=(height / 2, width / 2))
 
+        if return_wc:
+            return pwc
+        fig, ax = plt.subplots(figsize=(height / 2, width / 2))
         names = self._jux().corpus_0.name, self._jux().corpus_1.name
         legend_elements = [Patch(facecolor=colours[0], label=names[0]), Patch(facecolor=colours[1], label=names[1])]
         legend_elements.extend(add_legend)
