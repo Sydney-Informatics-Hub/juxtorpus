@@ -98,10 +98,10 @@ class Polarity(object):
         df['polarity'] = df[f'{corp_0.name}_tfidf'] - df[f'{corp_1.name}_tfidf']
         return df
 
-    def log_likelihood(self, dtm_names: tuple[str, str] | str, tokeniser_func: Optional = None):
+    def log_likelihood(self, dtm_names: tuple[str, str] | str):
         j = self._jux()
         llv = j.stats.log_likelihood_and_effect_size(dtm_names)
-        tf_polarity = self.tf(tokeniser_func)['polarity']
+        tf_polarity = self.tf(dtm_names)['polarity']
         llv['polarity'] = (tf_polarity * llv['log_likelihood_llv']) / tf_polarity.abs()
         return llv
 
