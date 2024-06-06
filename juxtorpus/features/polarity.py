@@ -11,12 +11,11 @@ Output:
 -> dataframe
 """
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 import weakref as wr
 
 import numpy as np
 import pandas as pd
-from typing import Generator
 from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
@@ -105,16 +104,6 @@ class Polarity(object):
         llv['polarity'] = (tf_polarity * llv['log_likelihood_llv']) / tf_polarity.abs()
         return llv
 
-    def _selected_dtms(self, tokeniser_func: Optional, **kwargs) -> Generator[DTM, None, None]:
-        """ Return a generator DTMs given a tokeniser function."""
-        lower = kwargs.pop('lower', True)
-        if tokeniser_func:
-            return (corpus.create_custom_dtm(tokeniser_func, inplace=False, **kwargs) for corpus in self._jux().corpora)
-        if not lower:  # note: corpus.dtm is lowered by default.
-            return (corpus.create_custom_dtm(None, inplace=False, **kwargs) for corpus in self._jux().corpora)
-        else:
-            return (corpus.dtm for corpus in self._jux().corpora)
-
     def wordcloud(self, dtm_names: tuple[str, str] | str, metric: str, top: int = 50, colours=('blue', 'red'),
                   stopwords: list[str] = None, return_wc: bool = False, **kwargs):
         """ Generate a wordcloud using one of the 3 modes tf, tfidf, log_likelihood. """
@@ -185,15 +174,14 @@ class Polarity(object):
                       Patch(facecolor='None', label='Translucent: Similar tfidf')]
         return pwc, add_legend
 
-    def _wordcloud_log_likelihood(self, dtm_names: tuple[str, str] | str, top: int, colours: tuple[str], tokeniser_func,
-                                  stopwords: list[str] = None,
-                                  **kwargs):
+    def _wordcloud_log_likelihood(self, dtm_names: tuple[str, str] | str, top: int, colours: tuple[str],
+                                  stopwords: list[str] = None):
         assert len(colours) == 2, "Only supports 2 colours."
         if stopwords is None: stopwords = list()
         sw = stopwords
         sw.extend(ENGLISH_STOP_WORDS)
 
-        df = self.log_likelihood(dtm_names, tokeniser_func)
+        df = self.log_likelihood(dtm_names)
         tf_df = self.tf(dtm_names)
         df['summed'] = tf_df['freq_corpus_0'] + tf_df['freq_corpus_1']
         df['polarity_div_summed'] = df['polarity'].abs() / df['summed']
