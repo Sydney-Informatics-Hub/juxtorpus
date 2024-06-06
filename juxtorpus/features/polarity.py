@@ -181,9 +181,12 @@ class Polarity(object):
         sw = stopwords
         sw.extend(ENGLISH_STOP_WORDS)
 
+        jux = self._jux()
+        corp_0, corp_1 = jux.corpus_0, jux.corpus_1
+
         df = self.log_likelihood(dtm_names)
         tf_df = self.tf(dtm_names)
-        df['summed'] = tf_df['freq_corpus_0'] + tf_df['freq_corpus_1']
+        df['summed'] = tf_df[f"{corp_0.name}_tf"] + tf_df[f"{corp_1.name}_tf"]
         df['polarity_div_summed'] = df['polarity'].abs() / df['summed']
         df = df[~df.index.isin(sw)]
         df_tmp = df.sort_values(by='summed', ascending=False).iloc[:top]
