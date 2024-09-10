@@ -13,9 +13,8 @@ from typing import Callable
 def wordclouds(corpora, names: list[str],
                max_words: int = 50,
                metric: str = 'tf',
-               word_type: str = 'word',
-               stopwords: list[str] = None,
-               lower: bool = True):
+               dtm_name: str = 'tokens',
+               stopwords: list[str] = None):
     MAX_COLS = 2
     nrows = math.ceil(len(names) / 2)
     fig, axes = plt.subplots(nrows=nrows, ncols=MAX_COLS, figsize=(16, 16 * 1.5))
@@ -26,9 +25,9 @@ def wordclouds(corpora, names: list[str],
         wc = _wordcloud(corpus,
                         max_words=max_words,
                         metric=metric,
-                        word_type=word_type,
+                        dtm_name=dtm_name,
                         stopwords=stopwords,
-                        lower=lower)
+                        return_wc=False)
         if nrows == 1:
             ax = axes[c]
         else:
@@ -42,9 +41,11 @@ def wordclouds(corpora, names: list[str],
     plt.show()
 
 
-def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 'word',
-              stopwords: list[str] = None, lower: bool = True):
-    wc = _wordcloud(corpus, max_words, metric, word_type, stopwords, lower)
+def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, dtm_name: str = 'tokens',
+              stopwords: list[str] = None, return_wc: bool = False):
+    wc = _wordcloud(corpus, max_words, metric, dtm_name, stopwords)
+    if return_wc:
+        return wc
     # h, w = 12, 12 * 1.5
     h, w = 6, 10
     plt.figure(figsize=(h, w))
@@ -54,34 +55,17 @@ def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, word_type: str = 
     plt.show()
 
 
-def _wordcloud(corpus, max_words: int, metric: str, word_type: str, stopwords: list[str] = None, lower: bool = True):
+def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, stopwords: list[str] = None):
     if stopwords is None: stopwords = list()
     stopwords.extend(ENGLISH_STOP_WORDS)
-    word_types = {'word', 'hashtag', 'mention'}
+    # word_types = {'word', 'hashtag', 'mention'}
     metrics = {'tf', 'tfidf'}
-    assert word_type in word_types, f"{word_type} not in {', '.join(word_types)}"
+    assert dtm_name in corpus.dtms.keys(), f"{dtm_name} not in {', '.join(corpus.dtms.keys())}"
     assert metric in metrics, f"{metric} not in {', '.join(metrics)}"
     wc = WordCloud(background_color='white', max_words=max_words, height=600, width=1200, stopwords=stopwords)
 
-    def lower_wrapper(gen) -> Callable:
-        def generate_lowered(doc):
-            return (str(x).lower() for x in gen(doc))
-
-        return generate_lowered
-
-    if word_type == 'word':
-        dtm = corpus.dtm  # corpus dtm is always lower cased.
-    elif word_type == 'hashtag':
-        gen = corpus._gen_hashtags_from
-        if lower: gen = lower_wrapper(gen)
-        dtm = corpus.create_custom_dtm(tokeniser_func=gen, inplace=False)
-    elif word_type == 'mention':
-        gen = corpus._gen_mentions_from
-        if lower: gen = lower_wrapper(gen)
-        dtm = corpus.create_custom_dtm(tokeniser_func=gen, inplace=False)
-    else:
-        raise ValueError(f"Word type {word_type} is not supported. Must be one of {', '.join(word_types)}")
-
+    dtm = corpus.dtms[dtm_name]
+    
     if metric == 'tf':
         with dtm.without_terms(stopwords) as dtm:
             counter = dtm.freq_table().series.to_dict()
