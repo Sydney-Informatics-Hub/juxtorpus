@@ -9,7 +9,7 @@ repository = "https://github.com/Sydney-Informatics-Hub/juxtorpus"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-ipywidgets = "^7.7.2"    # 8.x.x latest - backwards compatibility kept for FileUpload widget
+ipywidgets = ">=8.0"    # 8.x.x latest - backwards compatibility kept for FileUpload widget
 colorlog = "^6.7.0"
 
 # viz
@@ -18,15 +18,15 @@ tqdm = "^4.64.0"
 plotly = "^5.11.0"
 wordcloud = "^1.8.2.2"
 pyldavis = "^3.4.0"   # from 3.4.1 onwards - requires pandas >= 2.0
-atap-corpus = "^0.1.12"
-atap-corpus-loader = "^1.0.2"
+atap-corpus = ">=0.1.13"
+atap-corpus-loader = ">=1.7.2"
 
 
 
 [tool.poetry.dev-dependencies]
-jupyterlab = "^3.6"
-jupyterlab-vim = "^0.15"
-jupyterlab-git = "^0.41.0"
+jupyterlab = ">=3.6"
+jupyterlab-vim = ">=0.15"
+jupyterlab-git = ">=0.41.0"
 
 
 [build-system]
