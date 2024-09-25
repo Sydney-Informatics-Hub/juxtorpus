@@ -20,7 +20,7 @@ wordcloud = "^1.8.2.2"
 pyldavis = "^3.4.0"   # from 3.4.1 onwards - requires pandas >= 2.0
 atap-corpus = ">=0.1.13"
 atap-corpus-loader = ">=1.7.2"
-
+tmtoolkit = "^0.12.0"
 
 
 [tool.poetry.dev-dependencies]

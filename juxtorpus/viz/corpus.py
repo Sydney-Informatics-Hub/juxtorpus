@@ -8,6 +8,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import math
 from typing import Callable
+from tmtoolkit.bow.bow_stats import tfidf
 
 
 def wordclouds(corpora, names: list[str],
@@ -54,8 +55,12 @@ def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, dtm_name: str = '
     plt.tight_layout(pad=0)
     plt.show()
 
+def dtm2tfidf(dtm):
+    tfidf_mat = tfidf(dtm.matrix)
+    freq = dict(zip(dtm.vocab(), sum(tfidf_mat.toarray())))
+    return freq
 
-def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, freq_list:bool = False, stopwords: list[str] = None):
+def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, stopwords: list[str] = None):
     if stopwords is None: stopwords = list()
     # stopwords.extend(ENGLISH_STOP_WORDS)
     metrics = {'tf', 'tfidf'}
@@ -64,18 +69,14 @@ def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, freq_list:boo
     wc = WordCloud(background_color='white', max_words=max_words, height=600, width=1200, stopwords=stopwords)
 
     dtm = corpus.dtms[dtm_name]
-    
-    if metric == 'tf':
-        with dtm.without_terms(stopwords) as dtm:
+    with dtm.without_terms(stopwords) as dtm:
+        if metric == 'tf':
             counter = dtm.freq_table().to_dict()
-    elif metric == 'tfidf':
-        with dtm.tfidf().without_terms(stopwords) as dtm:
-            counter = dtm.tfidf().freq_table().to_dict()
-    else:
-        raise ValueError(f"Metric {metric} is not supported. Must be one of {', '.join(metrics)}")
+        elif metric == 'tfidf':
+            counter = dtm2tfidf(dtm)
+        else:
+            raise ValueError(f"Metric {metric} is not supported. Must be one of {', '.join(metrics)}")
     wc.generate_from_frequencies(counter)
-    if freq_list:
-        return wc, {k: v for k, v in sorted(counter.items(), key=lambda item: item[1], reverse=True)}
     return wc
 
 

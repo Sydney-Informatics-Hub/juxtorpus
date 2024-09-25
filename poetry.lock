@@ -265,6 +265,17 @@ html5lib = ["html5lib"]
 lxml = ["lxml"]
 
 [[package]]
+name = "bidict"
+version = "0.23.1"
+description = "The bidirectional mapping library for Python."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "bidict-0.23.1-py3-none-any.whl", hash = "sha256:5dae8d4d79b552a71cbabc7deb25dfe8ce710b17ff41711e13010ead2abfc3e5"},
+    {file = "bidict-0.23.1.tar.gz", hash = "sha256:03069d763bc387bbd20e7d49914e75fc4132a41937fa3405417e1a5a2d006d71"},
+]
+
+[[package]]
 name = "bleach"
 version = "6.1.0"
 description = "An easy safelist-based HTML-sanitizing tool."
@@ -1093,6 +1104,16 @@ gitdb = ">=4.0.1,<5"
 
 [package.extras]
 test = ["black", "coverage[toml]", "ddt (>=1.1.1,!=1.4.3)", "mock", "mypy", "pre-commit", "pytest (>=7.3.1)", "pytest-cov", "pytest-instafail", "pytest-mock", "pytest-sugar", "sumtypes"]
+
+[[package]]
+name = "globre"
+version = "0.1.5"
+description = "A glob matching library, providing an interface similar to the \"re\" module."
+optional = false
+python-versions = "*"
+files = [
+    {file = "globre-0.1.5.tar.gz", hash = "sha256:ee214204f237e9114b8f61eeb61c2abd1e665ca3b59e5a6a0b070971c0bb12e2"},
+]
 
 [[package]]
 name = "idna"
@@ -4150,6 +4171,41 @@ doc = ["sphinx", "sphinx_rtd_theme"]
 test = ["flake8", "isort", "pytest"]
 
 [[package]]
+name = "tmtoolkit"
+version = "0.12.0"
+description = "Text Mining and Topic Modeling Toolkit"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "tmtoolkit-0.12.0-py3-none-any.whl", hash = "sha256:f18c68ef0676377714a6fe87d1822903f3c3493cc64437d1da7964ec3f68b2b5"},
+    {file = "tmtoolkit-0.12.0.tar.gz", hash = "sha256:6df5429cd675989f21d9f075ddb11fe5ae273d6544fc337a2589bab2bc331909"},
+]
+
+[package.dependencies]
+bidict = ">=0.21.0,<1.0"
+globre = ">=0.1.5,<0.2"
+matplotlib = ">=3.5.0,<4.0"
+numpy = ">=1.23.0,<2.0"
+openpyxl = ">=3.0.0,<4.0"
+pandas = ">=1.4.0,<3.0"
+scipy = ">=1.7.0,<2.0"
+wheel = ">=0.40,<1.0"
+xlrd = ">=2.0.0"
+
+[package.extras]
+all = ["PyICU (>=2.8,<3.0)", "Sphinx (>=6.1.0,<7.0)", "coverage (>=7.2,<8.0)", "coverage-badge (>=1.1.0)", "gensim (>=4.1.0,<5.0)", "gmpy2 (>=2.1.0,<3.0)", "hypothesis (>=6.49.0,<7.0)", "ipython (>=8.12.0)", "jupyter (>=1.0.0)", "loky (>=3.0.0,<4.0)", "nbsphinx (>=0.9.0,<1.0)", "nltk (>=3.6.0,<3.9)", "notebook (>=6.5.0)", "pytest (>=7.2.0,<8.0)", "pytest-cov (>=4.0.0,<5.0)", "rpy2 (>=3.5.11,<3.6)", "scikit-learn (>=1.0.0,<2.0)", "setuptools (>=67.6)", "spacy (>=3.3.0,<4.0)", "sphinx-rtd-theme (>=1.2.0)", "tox (>=4.4,<5.0)", "twine (>=4.0)"]
+dev = ["coverage (>=7.2,<8.0)", "coverage-badge (>=1.1.0)", "ipython (>=8.12.0)", "jupyter (>=1.0.0)", "notebook (>=6.5.0)", "pytest-cov (>=4.0.0,<5.0)", "setuptools (>=67.6)", "tox (>=4.4,<5.0)", "twine (>=4.0)"]
+doc = ["Sphinx (>=6.1.0,<7.0)", "nbsphinx (>=0.9.0,<1.0)", "sphinx-rtd-theme (>=1.2.0)"]
+gensim = ["gensim (>=4.1.0,<5.0)"]
+recommended = ["loky (>=3.0.0,<4.0)", "spacy (>=3.3.0,<4.0)"]
+rinterop = ["rpy2 (>=3.5.11,<3.6)"]
+sklearn = ["scikit-learn (>=1.0.0,<2.0)"]
+test = ["hypothesis (>=6.49.0,<7.0)", "pytest (>=7.2.0,<8.0)"]
+textproc = ["loky (>=3.0.0,<4.0)", "spacy (>=3.3.0,<4.0)"]
+textproc-extra = ["PyICU (>=2.8,<3.0)", "nltk (>=3.6.0,<3.9)"]
+topic-modeling-eval-extra = ["gmpy2 (>=2.1.0,<3.0)"]
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -4404,6 +4460,20 @@ optional = ["python-socks", "wsaccel"]
 test = ["websockets"]
 
 [[package]]
+name = "wheel"
+version = "0.44.0"
+description = "A built-package format for Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "wheel-0.44.0-py3-none-any.whl", hash = "sha256:2376a90c98cc337d18623527a97c31797bd02bad0033d41547043a1cbfbe448f"},
+    {file = "wheel-0.44.0.tar.gz", hash = "sha256:a29c3f2817e95ab89aa4660681ad547c0e9547f20e75b0562fe7723c9a2a9d49"},
+]
+
+[package.extras]
+test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
+
+[[package]]
 name = "widgetsnbextension"
 version = "4.0.13"
 description = "Jupyter interactive widgets for Jupyter Notebook"
@@ -4635,4 +4705,4 @@ test = ["mypy", "pre-commit", "pytest", "pytest-asyncio", "websockets (>=10.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "a5966daded8fc7a0a92794bf381f7c03871c83c4e9778c26d81eee0c584583cb"
+content-hash = "a9b9487105b61f7f502818576bdd6c9b2cda8b7d49b93c9c8afc9ebadbf3682a"
