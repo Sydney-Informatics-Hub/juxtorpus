@@ -55,10 +55,9 @@ def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, dtm_name: str = '
     plt.show()
 
 
-def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, stopwords: list[str] = None):
+def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, freq_list:bool = False, stopwords: list[str] = None):
     if stopwords is None: stopwords = list()
-    stopwords.extend(ENGLISH_STOP_WORDS)
-    # word_types = {'word', 'hashtag', 'mention'}
+    # stopwords.extend(ENGLISH_STOP_WORDS)
     metrics = {'tf', 'tfidf'}
     assert dtm_name in corpus.dtms.keys(), f"{dtm_name} not in {', '.join(corpus.dtms.keys())}"
     assert metric in metrics, f"{metric} not in {', '.join(metrics)}"
@@ -68,16 +67,16 @@ def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, stopwords: li
     
     if metric == 'tf':
         with dtm.without_terms(stopwords) as dtm:
-            counter = dtm.freq_table().series.to_dict()
-            wc.generate_from_frequencies(counter)
-            return wc
+            counter = dtm.freq_table().to_dict()
     elif metric == 'tfidf':
         with dtm.tfidf().without_terms(stopwords) as dtm:
-            counter = dtm.tfidf().freq_table().series.to_dict()
-            wc.generate_from_frequencies(counter)
-            return wc
+            counter = dtm.tfidf().freq_table().to_dict()
     else:
         raise ValueError(f"Metric {metric} is not supported. Must be one of {', '.join(metrics)}")
+    wc.generate_from_frequencies(counter)
+    if freq_list:
+        return wc, {k: v for k, v in sorted(counter.items(), key=lambda item: item[1], reverse=True)}
+    return wc
 
 
 def timeline(corpus, datetime_meta: str, freq: str, meta_name: list[str] = None):
