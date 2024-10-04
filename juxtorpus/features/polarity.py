@@ -87,8 +87,8 @@ class Polarity(object):
         dtm_1: DTM = corp_1.get_dtm(dtm_1)
 
         df: pd.DataFrame = pd.concat([
-            pd.Series(dtm_0.terms_vector, index=dtm_0.terms, name=f'{corp_0.name}_tf'),
-            pd.Series(dtm_1.terms_vector, index=dtm_1.terms, name=f'{corp_1.name}_tf'),
+            pd.Series(dtm_0.terms_vector/dtm_0.total, index=dtm_0.terms, name=f'{corp_0.name}_tf'),
+            pd.Series(dtm_1.terms_vector/dtm_1.total, index=dtm_1.terms, name=f'{corp_1.name}_tf'),
             pd.Series(np.minimum(dtm_0.matrix.toarray(), 1).sum(axis=0), index=dtm_0.terms, name=f'{corp_0.name}_df'),
             pd.Series(np.minimum(dtm_1.matrix.toarray(), 1).sum(axis=0), index=dtm_1.terms, name=f'{corp_1.name}_df'),
         ], axis=1).fillna(0)
