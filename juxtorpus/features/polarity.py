@@ -63,8 +63,8 @@ class Polarity(object):
         dtm_1: DTM = corp_1.get_dtm(dtm_1)
 
         df: pd.DataFrame = pd.concat([
-            pd.Series(dtm_0.terms_vector, index=dtm_0.terms, name=f'{corp_0.name}_tf'),
-            pd.Series(dtm_1.terms_vector, index=dtm_1.terms, name=f'{corp_1.name}_tf')
+            pd.Series(dtm_0.terms_vector/dtm_0.total, index=dtm_0.terms, name=f'{corp_0.name}_tf'),
+            pd.Series(dtm_1.terms_vector/dtm_1.total, index=dtm_1.terms, name=f'{corp_1.name}_tf')
         ], axis=1).fillna(0)
         df['polarity'] = df[f"{corp_0.name}_tf"] - df[f"{corp_1.name}_tf"]
         return df
