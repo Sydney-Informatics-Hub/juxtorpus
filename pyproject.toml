@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "juxtorpus"
-version = "0.2.8"
+version = "0.2.9"
 description = "Juxtorpus compare and contrast two ATAP corpus."
 authors = ["jack <huen.chan@sydney.edu.au>"]
 readme = "README.md"
@@ -9,7 +9,7 @@ repository = "https://github.com/Sydney-Informatics-Hub/juxtorpus"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-ipywidgets = ">=8.0"    # 8.x.x latest - backwards compatibility kept for FileUpload widget
+# ipywidgets = ">=8.0"    # 8.x.x latest - backwards compatibility kept for FileUpload widget
 colorlog = "^6.7.0"
 
 # viz
@@ -19,7 +19,7 @@ plotly = "^5.11.0"
 wordcloud = "^1.8.2.2"
 pyldavis = "^3.4.0"   # from 3.4.1 onwards - requires pandas >= 2.0
 atap-corpus = ">=0.1.13"
-atap-corpus-loader = ">=1.7.2"
+# atap-corpus-loader = ">=1.7.3"
 tmtoolkit = "^0.12.0"
 
 
