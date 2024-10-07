@@ -56,8 +56,8 @@ def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, dtm_name: str = '
     plt.show()
 
 def dtm2tfidf(dtm):
-    tfidf_mat = tfidf(dtm.matrix)
-    freq = dict(zip(dtm.vocab(), sum(tfidf_mat.toarray())))
+    with tfidf(dtm.matrix) as tfidf_mat:
+        freq = dict(zip(dtm.terms, sum(tfidf_mat.toarray())))
     return freq
 
 def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, stopwords: list[str] = None):
