@@ -22,7 +22,7 @@ from matplotlib.patches import Patch
 
 from atap_corpus.parts.dtm import DTM
 from juxtorpus.viz.polarity_wordcloud import PolarityWordCloud
-
+from tmtoolkit.bow.bow_stats import tfidf as bow_tfidf
 if TYPE_CHECKING:
     from juxtorpus import Jux
 
@@ -87,13 +87,18 @@ class Polarity(object):
         dtm_1: DTM = corp_1.get_dtm(dtm_1)
 
         df: pd.DataFrame = pd.concat([
-            pd.Series(dtm_0.terms_vector/dtm_0.total, index=dtm_0.terms, name=f'{corp_0.name}_tf'),
-            pd.Series(dtm_1.terms_vector/dtm_1.total, index=dtm_1.terms, name=f'{corp_1.name}_tf'),
-            pd.Series(np.log10( dtm_0.shape[0]/np.minimum(dtm_0.matrix.toarray(), 1).sum(axis=0) ), index=dtm_0.terms, name=f'{corp_0.name}_df'),
-            pd.Series(np.log10( dtm_1.shape[0]/np.minimum(dtm_1.matrix.toarray(), 1).sum(axis=0) ), index=dtm_1.terms, name=f'{corp_1.name}_df'),
+            pd.Series(sum(bow_tfidf(dtm_0.matrix).toarray()), index=dtm_0.terms, name=f'{corp_0.name}_tfidf'),
+            pd.Series(sum(bow_tfidf(dtm_1.matrix).toarray()), index=dtm_1.terms, name=f'{corp_1.name}_tfidf')
         ], axis=1).fillna(0)
-        df[f'{corp_0.name}_tfidf'] = df[f'{corp_0.name}_tf'] * df[f'{corp_0.name}_df']
-        df[f'{corp_1.name}_tfidf'] = df[f'{corp_1.name}_tf'] * df[f'{corp_1.name}_df']
+        
+        # df: pd.DataFrame = pd.concat([
+        #     pd.Series(dtm_0.terms_vector/dtm_0.total, index=dtm_0.terms, name=f'{corp_0.name}_tf'),
+        #     pd.Series(dtm_1.terms_vector/dtm_1.total, index=dtm_1.terms, name=f'{corp_1.name}_tf'),
+        #     pd.Series(np.log10( dtm_0.shape[0]/np.minimum(dtm_0.matrix.toarray(), 1).sum(axis=0) ), index=dtm_0.terms, name=f'{corp_0.name}_df'),
+        #     pd.Series(np.log10( dtm_1.shape[0]/np.minimum(dtm_1.matrix.toarray(), 1).sum(axis=0) ), index=dtm_1.terms, name=f'{corp_1.name}_df'),
+        # ], axis=1).fillna(0)
+        # df[f'{corp_0.name}_tfidf'] = df[f'{corp_0.name}_tf'] * df[f'{corp_0.name}_df']
+        # df[f'{corp_1.name}_tfidf'] = df[f'{corp_1.name}_tf'] * df[f'{corp_1.name}_df']
         df['polarity'] = df[f'{corp_0.name}_tfidf'] - df[f'{corp_1.name}_tfidf']
         return df
 

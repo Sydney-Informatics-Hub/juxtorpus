@@ -8,7 +8,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import math
 from typing import Callable
-from tmtoolkit.bow.bow_stats import tfidf
+from tmtoolkit.bow.bow_stats import tfidf as bow_tfidf
 
 
 def wordclouds(corpora, names: list[str],
@@ -56,8 +56,8 @@ def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, dtm_name: str = '
     plt.show()
 
 def dtm2tfidf(dtm):
-    with tfidf(dtm.matrix) as tfidf_mat:
-        freq = dict(zip(dtm.terms, sum(tfidf_mat.toarray())))
+    tfidf_mat = bow_tfidf(dtm.matrix)
+    freq = dict(zip(dtm.terms, sum(tfidf_mat.toarray())))
     return freq
 
 def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, stopwords: list[str] = None):
