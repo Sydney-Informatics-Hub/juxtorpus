@@ -55,10 +55,6 @@ def wordcloud(corpus, metric: str = 'tf', max_words: int = 50, dtm_name: str = '
     plt.tight_layout(pad=0)
     plt.show()
 
-def dtm2tfidf(dtm):
-    tfidf_mat = bow_tfidf(dtm.matrix)
-    freq = dict(zip(dtm.terms, sum(tfidf_mat.toarray())))
-    return freq
 
 def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, stopwords: list[str] = None):
     if stopwords is None: stopwords = list()
@@ -70,14 +66,18 @@ def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, stopwords: li
 
     dtm = corpus.dtms[dtm_name]
     with dtm.without_terms(stopwords) as dtm:
+        fl = dtm.freq_table()
         if metric == 'tf':
-            counter = dtm.freq_table().to_dict()
+            df = pd.DataFrame({'Count':fl, 'Freq':1_000*fl/dtm.total})
         elif metric == 'tfidf':
-            counter = dtm2tfidf(dtm)
+            tfidf_mat = bow_tfidf(dtm.matrix)
+            df = pd.DataFrame({'Count':fl, 'Freq':sum(tfidf_mat.toarray())})
         else:
             raise ValueError(f"Metric {metric} is not supported. Must be one of {', '.join(metrics)}")
+    df = df.sort_values('Freq', ascending=False)
+    counter = df.Freq.to_dict()
     wc.generate_from_frequencies(counter)
-    return wc
+    return wc, df.reset_index().rename(columns={'index':'Word'})
 
 
 def timeline(corpus, datetime_meta: str, freq: str, meta_name: list[str] = None):

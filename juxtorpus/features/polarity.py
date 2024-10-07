@@ -90,7 +90,7 @@ class Polarity(object):
             pd.Series(sum(bow_tfidf(dtm_0.matrix).toarray()), index=dtm_0.terms, name=f'{corp_0.name}_tfidf'),
             pd.Series(sum(bow_tfidf(dtm_1.matrix).toarray()), index=dtm_1.terms, name=f'{corp_1.name}_tfidf')
         ], axis=1).fillna(0)
-        
+
         # df: pd.DataFrame = pd.concat([
         #     pd.Series(dtm_0.terms_vector/dtm_0.total, index=dtm_0.terms, name=f'{corp_0.name}_tf'),
         #     pd.Series(dtm_1.terms_vector/dtm_1.total, index=dtm_1.terms, name=f'{corp_1.name}_tf'),
@@ -118,11 +118,11 @@ class Polarity(object):
         assert len(colours) == 2, "There can only be 2 colours. e.g. ('blue', 'red')."
 
         height, width = 24, 24
-        pwc, add_legend = polarity_wordcloud_func(dtm_names, top, colours, stopwords, **kwargs)
+        pwc, add_legend, df_tmp = polarity_wordcloud_func(dtm_names, top, colours, stopwords, **kwargs)
         pwc._build(resolution_scale=int(height * width * 0.005))
 
         if return_wc:
-            return pwc
+            return pwc, df_tmp
         fig, ax = plt.subplots(figsize=(height / 2, width / 2))
         names = self._jux().corpus_0.name, self._jux().corpus_1.name
         legend_elements = [Patch(facecolor=colours[0], label=names[0]), Patch(facecolor=colours[1], label=names[1])]
@@ -139,7 +139,7 @@ class Polarity(object):
         assert len(colours) == 2, "Only supports 2 colours."
         if stopwords is None: stopwords = list()
         sw = stopwords
-        sw.extend(ENGLISH_STOP_WORDS)
+        # sw.extend(ENGLISH_STOP_WORDS)
 
         corp_0, corp_1 = self._jux().corpus_0, self._jux().corpus_1
 
@@ -156,15 +156,18 @@ class Polarity(object):
         add_legend = [Patch(facecolor='None', label='Size: Polarised and Rare'),
                       Patch(facecolor='None', label='Solid: Higher frequency to one corpus'),
                       Patch(facecolor='None', label='Translucent: Similar frequency'), ]
-        return pwc, add_legend
+        df_sorted = df.reindex(df['polarity'].abs().sort_values(ascending=False).index)
+        return pwc, add_legend, df_sorted.reset_index().rename(columns={'index':'Word'})
 
     def _wordcloud_tfidf(self, dtm_names: tuple[str, str] | str, top: int, colours: tuple[str],
                          stopwords: list[str] = None, **kwargs):
         assert len(colours) == 2, "Only supports 2 colours."
-        if stopwords is None:
-            sw = list(ENGLISH_STOP_WORDS)
-        else:
-            sw = stopwords
+        # if stopwords is None:
+        #     sw = list(ENGLISH_STOP_WORDS)
+        # else:
+        #     sw = stopwords
+        if stopwords is None: stopwords = list()
+        sw = stopwords
 
         df = self.tfidf(dtm_names, **kwargs)
         df['size'] = df['polarity'].abs()
@@ -177,14 +180,15 @@ class Polarity(object):
         add_legend = [Patch(facecolor='None', label='Size: Tfidf of both'),
                       Patch(facecolor='None', label='Solid: Higher Tfidf to one corpus'),
                       Patch(facecolor='None', label='Translucent: Similar tfidf')]
-        return pwc, add_legend
+        df_sorted = df.reindex(df['polarity'].abs().sort_values(ascending=False).index)
+        return pwc, add_legend, df_sorted.reset_index().rename(columns={'index':'Word'})
 
     def _wordcloud_log_likelihood(self, dtm_names: tuple[str, str] | str, top: int, colours: tuple[str],
                                   stopwords: list[str] = None):
         assert len(colours) == 2, "Only supports 2 colours."
         if stopwords is None: stopwords = list()
         sw = stopwords
-        sw.extend(ENGLISH_STOP_WORDS)
+        # sw.extend(ENGLISH_STOP_WORDS)
 
         jux = self._jux()
         corp_0, corp_1 = jux.corpus_0, jux.corpus_1
@@ -201,4 +205,5 @@ class Polarity(object):
         add_legend = [Patch(facecolor='None', label='Size: Polarised and Rare'),
                       Patch(facecolor='None', label='Solid: Higher log likelihood to one corpus'),
                       Patch(facecolor='None', label='Translucent: Similar log likelihood')]
-        return pwc, add_legend
+        df_sorted = df.reindex(df['polarity'].abs().sort_values(ascending=False).index)
+        return pwc, add_legend, df_sorted.reset_index().rename(columns={'index':'Word'})
