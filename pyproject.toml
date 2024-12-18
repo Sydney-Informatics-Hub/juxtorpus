@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "juxtorpus"
-version = "0.3.1"
+version = "0.3.2"
 description = "Juxtorpus compare and contrast two ATAP corpus."
 authors = ["jack <huen.chan@sydney.edu.au>", "Chao Sun <chao.sun@sydney.edu.au>"]
 readme = "README.md"
