@@ -65,15 +65,15 @@ def _wordcloud(corpus, max_words: int, metric: str, dtm_name: str, stopwords: li
     wc = WordCloud(background_color='white', max_words=max_words, height=600, width=1200, stopwords=stopwords)
 
     dtm = corpus.dtms[dtm_name]
-    with dtm.without_terms(stopwords) as dtm:
-        fl = dtm.freq_table()
-        if metric == 'tf':
-            df = pd.DataFrame({'Count':fl, 'Freq':1_000*fl/dtm.total})
-        elif metric == 'tfidf':
-            tfidf_mat = bow_tfidf(dtm.matrix)
-            df = pd.DataFrame({'Count':fl, 'Freq':sum(tfidf_mat.toarray())})
-        else:
-            raise ValueError(f"Metric {metric} is not supported. Must be one of {', '.join(metrics)}")
+    fl = dtm.freq_table()
+    if metric == 'tf':
+        df = pd.DataFrame({'Count':fl, 'Freq':1_000*fl/dtm.total})
+    elif metric == 'tfidf':
+        tfidf_mat = bow_tfidf(dtm.matrix)
+        df = pd.DataFrame({'Count':fl, 'Freq':sum(tfidf_mat.toarray())})
+    else:
+        raise ValueError(f"Metric {metric} is not supported. Must be one of {', '.join(metrics)}")
+    df = df[~df.index.isin(stopwords)]
     df = df.sort_values('Freq', ascending=False)
     counter = df.Freq.to_dict()
     wc.generate_from_frequencies(counter)
